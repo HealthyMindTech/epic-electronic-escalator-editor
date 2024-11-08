@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Building with Moving People</title>
     <style>
         body { margin: 0; overflow: hidden; }
@@ -106,7 +107,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         camera.position.set(10, 15, 15);
-        
+
         // OrbitControls for interactivity
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -173,7 +174,7 @@
             numFloors = parseInt(document.getElementById("floorCount").value);
             maxElevators = parseInt(document.getElementById("elevatorCount").value);
             maxPeople = parseInt(document.getElementById("peopleCount").value);
-            
+
             // Create floors and walls for each level
             for (let i = 0; i < numFloors; i++) {
                 const yOffset = i * floorHeight;
@@ -342,6 +343,10 @@
 
         function startSimulation() {
             if (isSimulationRunning) return;
+            if (elevators.length == 0) {
+                console.log("Need elevators to run simulation.");
+                return;
+            }
             isSimulationRunning = true;
             movingPeople = people.map(person => ({
                 mesh: person,
@@ -393,7 +398,6 @@
         }
 
         function stopSimulation() { isSimulationRunning = false; }
-
 
         // Event listener for mouse clicks
         window.addEventListener('click', onMouseClick, false);
