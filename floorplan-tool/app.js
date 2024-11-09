@@ -131,6 +131,7 @@ function handleImage(e) {
                 selectable: true,
                 hasRotatingPoint: true,
                 excludeFromExport: true, // Exclude image from SVG export
+                opacity: 0.5,
             });
             // Optionally, customize control visibility
             image.setControlsVisibility({
