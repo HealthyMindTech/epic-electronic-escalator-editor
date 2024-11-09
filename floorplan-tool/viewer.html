@@ -925,6 +925,7 @@
             // Update the live count display
             document.getElementById('peopleCompleted').innerText = peopleCompleted;
 
+            const targetPercentage = Math.floor((peopleCompleted / totalPeople) * 100);
             if (peopleCompleted >= totalPeople) {
                 // Stop the timer
                 clearInterval(timerInterval);

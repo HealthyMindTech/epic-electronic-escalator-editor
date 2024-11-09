@@ -269,14 +269,13 @@ function hideSnapIndicator() {
 function fetchBuildingFootprint(lat, lng) {
     const query = `
         [out:json];
-        way(around:20, ${lat}, ${lng})["building"];  // Increase radius here
+        way(around:30, ${lat}, ${lng})["building"];  // Increase radius here
         (._;>;);
         out body;
     `;
     fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
-                        console.log(data);
                         const coordinates = extractCoordinates(data);
                         const buildingInfo = fetchBuildingInfo(data);
                         if (coordinates) {
