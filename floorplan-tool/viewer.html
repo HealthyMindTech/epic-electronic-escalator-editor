@@ -129,11 +129,20 @@
     <script>
       const urlParams = new URLSearchParams(window.location.search);
 
-      console.log(urlParams);
       // Access a specific query parameter, e.g., 'lat' or 'lng'
-      let numFloors = urlParams["numberOfFloors"] || 4, maxPeople = 150;
+      let numFloors = urlParams.get("numberOfFloors") || 4, maxPeople = 150;
+      console.log(numFloors);
       window.addEventListener("load", function() {
-          document.getElementById('floorCount').value = numFloors;
+          console.log("Loaded");
+          const input = document.getElementById('floorCount');
+          console.log(parseFloat(numFloors));
+          input.setAttribute('value', parseFloat(numFloors));
+          console.log(input);
+          input.addEventListener("change", function() {
+              numFloors = parseFloat(input.value);
+              console.log(numFloors);
+          });
+          getSVGDataFromURL();
       });
         let elevators = [], people = [], movingPeople = [], selectedElevator = null;
         let floorObjects = [], wallObjects = [], isSimulationRunning = false;
@@ -466,7 +475,6 @@
         function buildBuildingFromSVGData(points, lines) {
             clearBuilding();
 
-            numFloors = parseInt(document.getElementById("floorCount").value);
             maxPeople = parseInt(document.getElementById("peopleCount").value);
 
             // Create floors and walls for each level
@@ -1068,9 +1076,6 @@
 
             people.forEach(person => scene.remove(person));
         }
-
-
-        getSVGDataFromURL();
 
         // Event listener for mouse clicks
         window.addEventListener('click', onMouseClick, false);
