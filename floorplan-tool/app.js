@@ -68,7 +68,7 @@ canvas.selection = false;
 
 // Create a text object to display the current mode
 const modeDisplay = new fabric.Text(currentMode, {
-    left: canvas.getWidth() - 200, // Adjust position as needed
+    left: canvas.getWidth() - 250, // Adjust position as needed
     top: 10,
     fontSize: 18,
     fontFamily: 'Arial',
@@ -122,6 +122,7 @@ function handleImage(e) {
         const imgObj = new Image();
         imgObj.src = event.target.result;
         imgObj.onload = function () {
+            lockImageButton.className = "btn btn-primary text-gray-200";
             const image = new fabric.Image(imgObj);
 
              // Calculate the scaling factors
