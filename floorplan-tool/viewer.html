@@ -7,13 +7,21 @@
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
+        #interface-inner {
+            background-color: #373858;
+            padding: 10px;
+            border: 1px solid #6d6d7f;
+        }
         #interface {
+            font-family: monospace;
             position: absolute;
             top: 10px;
             left: 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px;
-            border-radius: 5px;
+            background-color: #373858;
+            padding: 4px;
+            border: 1px solid #6d6d7f;
+            color: white;
+            font-size: 10px;
         }
         #popup {
             display: none;
@@ -33,7 +41,7 @@
             position: absolute;
             bottom: 10px;
             right: 10px;
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: #373858;
             padding: 10px;
             border-radius: 5px;
             text-align: center;
@@ -59,22 +67,64 @@
             bottom: 10px;
             left: 10px;
         }
+        button {
+            border: none;
+            padding: 0;
+            margin: 0;
+            background-color: rgb(176, 195, 205);
+            /* margin-right: 12px; */
+            border: none;
+            font-size: 12px;
+            box-sizing: border-box;
+            border-width: 0.125rem;
+            line-height: 1.15;
+            height: 100%;
+            /* padding-left: 1rem; */
+            /* padding-right: 1rem; */
+            outline: none;
+            color: rgb(35, 41, 60);
+            cursor: pointer;
+            border-left: 1px solid rgb(235, 255, 255);
+            border-top: 1px solid rgb(235, 255, 255);
+            border-bottom: 1px solid rgb(58, 71, 88);
+            border-right: 1px solid rgb(58, 71, 88);
+        }
+        input {
+            background-color: black;
+            color: #00ff00;
+            width: 60px;
+        }
+        .form {
+            margin-bottom: 10px;
+        }
+        #playbutton {
+            height: 18px;
+            width: 23px;
+            background-repeat: no-repeat;
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAMAAACHObUhAAAARVBMVEUmJTsmJTwnJz0nKD4oJz4oKD8pKUAqKUEqKUIqKkMrK0QrLEQsK0MsK0QsK0ZKWmtSY3N7hJSElKWXqLmttca9ztbv//93JWkaAAAAcElEQVQY022QQQ7FIAhEHzJpL/Dvf8y/MBG70VZbYEPeAIGxH0nEX5QEB4L+xj26CnkMXus2QJv92hXXrETluHnT07MqrnV6UbSfcY6rY+N+/1KUUTBl9Nl/vtxow5+PRyKif+1xpZhmmIEZMxFh+AXgtiNLLYv6agAAAABJRU5ErkJggg==);
+        }
+        #resetbutton {
+            height: 18px;
+            width: 23px;
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAMAAACHObUhAAAAP1BMVEUyMU4yMk8zM1AzNFE0M1E0M1I0NFE0NFM1NVQ1NlQ2NVM2NVQ2NlVKWmtSY3N7hJSElKWXqLmttca9ztbv//8mgTHJAAAAXElEQVQYGW3BQQ7DMAwDwRUttPf+/6FFD2SBBLnYmqkPA38bcbBpCJs4ErPm8uPxAgLNrbmtcBGjiFHETIyWGFmMIkarubzZNAQIm8YOB7cdTqsooERWkEXJheoPfCIcRKB1vkQAAAAASUVORK5CYII=)
+        }
     </style>
 </head>
 <body>
     <!-- User Interface -->
     <div id="interface">
-    <!-- <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)"> -->
-    <form onsubmit="return false;">
-        <label>Number of Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
-        <label>Number of People: <input type="number" id="peopleCount" value="50" min="1"></label><br>
-    </form>
-        <button onclick="startSimulation()">Play</button>
-        <button onclick="stopSimulation()">Stop</button>
-        <button onclick="resetSimulation()">Reset</button>
-        <button onclick="removeAllElevators()">Remove All Elevators</button>
+        <div id="interface-inner">
+        <!-- <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)"> -->
+        <form onsubmit="return false;" class="form">
+            <label># Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
+            <label># People: <input type="number" id="peopleCount" value="50" min="1"></label><br>
+        </form>
+            <button onclick="startSimulation()" id="playbutton"></button><button onclick="resetSimulation()" id="resetbutton"></button>
+            <!-- <button onclick="stopSimulation()">Stop</button> -->
+            <!-- <button onclick="removeAllElevators()">Remove All Elevators</button> -->
+        </div>
     </div>
-    <div id="timer" style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
+    <div id="timer" style="display: none; position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
         <p>Time to complete all trips:<br/><span id="timerValue">0</span> seconds</p>
         <p>People Reached Destination:<br/><span id="peopleCompleted">0</span> / <span id="totalPeople">0</span></p>
     </div>
@@ -90,7 +140,7 @@
     </div>
 
     <!-- Controls for 3D Model Manipulation -->
-    <div id="controls">
+    <!-- <div id="controls">
         <h4>3D Controls</h4>
         <button onclick="rotateCamera('left')">⟲</button>
         <button onclick="rotateCamera('right')">⟳</button>
@@ -103,7 +153,7 @@
             </div>
             <button onclick="panCamera('down')">⬇</button>
         </div>
-    </div>
+    </div> -->
 
     <script>
         // Add keyboard controls
@@ -229,7 +279,7 @@
         const wallThickness = 0.1;
         const wallOpacity = 0.2;
         const floorOpacity = 0.1;
-        const elevatorOpacity = 1.0;
+        const elevatorOpacity = 0.8;
         const wallColor = 0x1ed273;
         const floorColor = 0x1ed273;
         const elevatorColor = 0x0000ff;
