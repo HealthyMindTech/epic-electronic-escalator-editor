@@ -117,13 +117,17 @@ let floorplanImage = null;
 imageLoader.addEventListener('change', handleImage, false);
 
 function handleImage(e) {
+    document.getElementById('load-lines-button').className = "btn btn-warning disabled loading";
+    document.getElementById('show-image-button').className = "btn btn-warning disabled loading";
+
     const reader = new FileReader();
     reader.onload = function (event) {
         const imgObj = new Image();
+
         const data = new FormData();
         data.append('file', e.target.files[0]);
 
-        const url = "https://python-wandering-dream-160.fly.dev/upload";
+        const url = "http://localhost:5000/upload"; //"https://python-wandering-dream-160.fly.dev/upload";
 
         fetch(url, {
             method: 'POST',
@@ -132,6 +136,8 @@ function handleImage(e) {
             floorLines = response.json().then(data => {
                 console.log(data);
                 floorLines = data;
+                document.getElementById('load-lines-button').className = "btn btn-warning";
+
             });
         });
 
@@ -139,52 +145,9 @@ function handleImage(e) {
         imgObj.src = event.target.result;
         imgObj.onload = function () {
             lockImageButton.className = "btn btn-primary text-gray-200";
-            const image = new fabric.Image(imgObj);
+            imageBackground = new fabric.Image(imgObj);
+            document.getElementById('show-image-button').className = "btn btn-warning";
 
-             // Calculate the scaling factors
-            const canvasWidth = canvas.getWidth();
-            const canvasHeight = canvas.getHeight();
-            const imageWidth = image.width;
-            const imageHeight = image.height;
-
-            const scaleX = canvasWidth / imageWidth;
-            const scaleY = canvasHeight / imageHeight;
-            const scale = Math.min(scaleX, scaleY);
-
-            image.set({
-                left: canvas.getWidth() / 2,
-                top: canvas.getHeight() / 2,
-                originX: 'center',
-                originY: 'center',
-                selectable: true,
-                hasRotatingPoint: true,
-                excludeFromExport: true, // Exclude image from SVG export
-                opacity: 0.5,
-                scaleX: scale,
-                scaleY: scale
-            });
-            // Optionally, customize control visibility
-            image.setControlsVisibility({
-                mt: true, // Middle top
-                mb: true, // Middle bottom
-                ml: true, // Middle left
-                mr: true, // Middle right
-                bl: true, // Bottom left
-                br: true, // Bottom right
-                tl: true, // Top left
-                tr: true, // Top right
-                mtr: true,  // Rotation control
-            });
-            canvas.add(image);
-            canvas.setActiveObject(image);
-            floorplanImage = image;
-            toggleLockImage('Floorplan Image Editing Mode');
-            canvas.renderAll();
-
-            // Keep a reference to the floorplan image
-
-            // Send the image to the back
-            canvas.sendToBack(floorplanImage);
         };
     };
     reader.readAsDataURL(e.target.files[0]);
@@ -607,6 +570,59 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
 
 
 let floorLines = [];
+let imageBackground;
+
+function showImageAsTemplate() {
+    const image = imageBackground;
+    if (!image) {
+        return;
+    }
+    // Calculate the scaling factors
+    const canvasWidth = canvas.getWidth();
+    const canvasHeight = canvas.getHeight();
+    const imageWidth = image.width;
+    const imageHeight = image.height;
+
+    const scaleX = canvasWidth / imageWidth;
+    const scaleY = canvasHeight / imageHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    image.set({
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        hasRotatingPoint: true,
+        excludeFromExport: true, // Exclude image from SVG export
+        opacity: 0.5,
+        scaleX: scale,
+        scaleY: scale
+    });
+    // Optionally, customize control visibility
+    image.setControlsVisibility({
+        mt: true, // Middle top
+        mb: true, // Middle bottom
+        ml: true, // Middle left
+        mr: true, // Middle right
+        bl: true, // Bottom left
+        br: true, // Bottom right
+        tl: true, // Top left
+        tr: true, // Top right
+        mtr: true,  // Rotation control
+    });
+    canvas.add(image);
+    canvas.setActiveObject(image);
+    floorplanImage = image;
+    toggleLockImage('Floorplan Image Editing Mode');
+    canvas.renderAll();
+
+    // Keep a reference to the floorplan image
+
+    // Send the image to the back
+    canvas.sendToBack(floorplanImage);
+}
+
 // Function to draw the lines on the canvas
 function loadLines() {
     // Assuming footprint is already defined and added to the canvas

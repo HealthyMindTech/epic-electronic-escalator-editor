@@ -89,17 +89,17 @@ def do_the_magic(file_path):
         # image = np.array(im_image.getdata())
 
 
-    img = cv2.GaussianBlur(gray, (11, 11), 0)
+    img = cv2.GaussianBlur(gray, (5, 5), 0)
     # Apply edge detection
     edges = cv2.Canny(img, threshold1=50, threshold2=150, apertureSize=3)
 
     # Apply a morphological closing operation to emphasize thick lines (walls)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (13, 13))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
     closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-    walls = cv2.erode(closed, np.ones((11, 11)))
-    walls = cv2.dilate(walls, np.ones((5, 5)))
-    lines = cv2.HoughLinesP(walls, rho=1, theta=np.pi/180, threshold=200, minLineLength=50, maxLineGap=10)
+    walls = cv2.erode(closed, np.ones((5, 5)))
+    walls = cv2.dilate(walls, np.ones((3, 3)))
+    lines = cv2.HoughLinesP(walls, rho=1, theta=np.pi/180, threshold=50, minLineLength=30, maxLineGap=10)
 
     lines = lines.reshape(lines.shape[0], lines.shape[2])
     # Create an empty image to draw wall lines

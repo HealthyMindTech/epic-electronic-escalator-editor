@@ -133,9 +133,13 @@
             accept="image/*"
             class="file-input file-input-bordered file-input-primary w-full max-w-xs"
           />
-          <button class="btn btn-warning" onclick="loadLines()">
+          <button id="load-lines-button" class="btn btn-warning" onclick="loadLines()">
             Load Lines
           </button>
+          <button id="show-image-button" class="btn btn-warning" onclick="showImageAsTemplate()">
+            Show Image
+          </button>
+
           <form method="dialog">
             <!-- if there is a button in form, it will close the modal -->
             <button class="btn">Close</button>
