@@ -781,16 +781,22 @@
             let floorIdx = 0; // Default to ground floor
             if (peopleSpawnPoint) {
                 // Place person at spawn point
-                floorIdx = Math.floor(peopleSpawnPoint.y / (floorHeight));
+                floorIdx = Math.floor(peopleSpawnPoint.y / floorHeight);
                 const yPos = floorIdx * floorHeight + 0.2;
                 person.position.set(peopleSpawnPoint.x, yPos, peopleSpawnPoint.z);
             } else {
-                // Random floor
-                floorIdx = Math.floor(Math.random() * numFloors);
-                const yPos = floorIdx * floorHeight + 0.2;
-                person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
+                // Place person at a random valid position on floor 0
+                const position = getRandomDestinationWithinFloor(floorIdx);
+                if (position) {
+                    person.position.copy(position);
+                } else {
+                    console.error("Could not find a valid starting position for person on floor", floorIdx);
+                    // Set a default position if no valid position is found
+                    person.position.set(0, floorIdx * floorHeight + 0.2, 0);
+                }
             }
         }
+
 
 
         function chooseRandomTargetFloor(currentFloor) {
@@ -948,9 +954,24 @@
 
 
         function getRandomDestinationWithinFloor(floor) {
-            const yPos = floor * 3 + 0.2;
-            return new THREE.Vector3(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
+            const gridData = grids[floor];
+            const { grid, minX, minZ, width, height } = gridData;
+            const yPos = floor * floorHeight + 0.2;
+            let attempts = 0;
+            while (attempts < 1000) {
+                const i = Math.floor(Math.random() * height);
+                const j = Math.floor(Math.random() * width);
+                if (grid[i][j] === 0) { // Walkable
+                    const x = minX + j * gridCellSize + gridCellSize / 2;
+                    const z = minZ + i * gridCellSize + gridCellSize / 2;
+                    return new THREE.Vector3(x, yPos, z);
+                }
+                attempts++;
+            }
+            console.error("Could not find a valid random destination within floor", floor);
+            return null;
         }
+
 
         function stopSimulation() { isSimulationRunning = false; }
 
