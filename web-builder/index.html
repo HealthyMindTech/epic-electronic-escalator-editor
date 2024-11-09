@@ -341,6 +341,14 @@
             person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
         }
 
+        function chooseRandomTargetFloor(currentFloor) {
+            let targetFloor = Math.floor(Math.random() * numFloors);
+            while (targetFloor === currentFloor) {
+                targetFloor = Math.floor(Math.random() * numFloors);
+            }
+            return targetFloor;
+        }
+
         function startSimulation() {
             if (isSimulationRunning) return;
             if (elevators.length == 0) {
@@ -348,14 +356,31 @@
                 return;
             }
             isSimulationRunning = true;
-            movingPeople = people.map(person => ({
+            movingPeople = people.map(person => {
+                const currentFloor = Math.floor(person.position.y / 3);
+                const targetFloor = chooseRandomTargetFloor(currentFloor);
+                return {
                 mesh: person,
-                floor: Math.floor(person.position.y / 3),
-                destinationFloor: Math.floor(Math.random() * numFloors),
+                floor: currentFloor,
+                destinationFloor: targetFloor,
+                destinationPosition: getRandomDestinationWithinFloor(targetFloor),
                 speed: 0.02 + Math.random() * 0.05,
                 inElevator: false,
-            }));
+            }});
             animatePeople();
+        }
+
+        function findClosestElevator(personPosition) {
+            let closestElevator = elevators[0];
+            let minDistance = personPosition.distanceTo(elevators[0].position);
+            for (let i = 1; i < elevators.length; i++) {
+                const distance = personPosition.distanceTo(elevators[i].position);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestElevator = elevators[i];
+                }
+            }
+            return closestElevator;
         }
 
         function animatePeople() {
@@ -363,10 +388,10 @@
                 const { mesh, floor, destinationFloor, speed } = person;
                 
                 if (floor === destinationFloor) {
-                    const destination = getRandomDestinationWithinFloor(floor);
-                    movePerson(mesh, destination, speed);
+                    movePerson(mesh, person.destinationPosition, speed);
                 } else if (!person.inElevator) {
-                    const elevator = elevators[Math.floor(Math.random() * elevators.length)];
+                    const elevator = findClosestElevator(mesh.position);
+                    // const elevator = elevators[Math.floor(Math.random() * elevators.length)];
                     movePerson(mesh, elevator.position, speed);
                     
                     if (mesh.position.distanceTo(elevator.position) < 0.1) {
