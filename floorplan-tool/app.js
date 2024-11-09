@@ -128,7 +128,13 @@ function handleImage(e) {
         fetch(url, {
             method: 'POST',
             body: data
-        }).then(response => console.log(response.json()));
+        }).then(response => {
+            floorLines = response.json().then(data => {
+                console.log(data);
+                floorLines = data;
+            });
+        });
+
 
         imgObj.src = event.target.result;
         imgObj.onload = function () {
@@ -600,292 +606,37 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
 }
 
 
-// Lines with x1, x2, y1, y2
-floorLines = [
-    [
-    0.16863323500491642,
-    0.00881316098707403,
-    1.0,
-    0.00881316098707403
-    ],
-    [
-    0.32890855457227136,
-    1.0,
-    0.32890855457227136,
-    0.21269095182138661
-    ],
-    [
-    0.08259587020648967,
-    1.0,
-    0.8539823008849557,
-    1.0
-    ],
-    [
-    0.0,
-    1.0,
-    0.0,
-    0.18037602820211515
-    ],
-    [
-    0.9911504424778761,
-    0.6069330199764983,
-    0.9980334316617503,
-    0.15746180963572268
-    ],
-    [
-    0.7699115044247787,
-    0.31609870740305523,
-    1.0,
-    0.3207990599294947
-    ],
-    [
-    0.41002949852507375,
-    0.4688601645123384,
-    0.5771878072763028,
-    0.4688601645123384
-    ],
-    [
-    0.5398230088495575,
-    0.39247943595769685,
-    0.5398230088495575,
-    0.10223266745005875
-    ],
-    [
-    0.9980334316617503,
-    0.8407755581668626,
-    1.0,
-    0.9976498237367802
-    ],
-    [
-    0.20993117010816126,
-    0.9059929494712103,
-    0.3416912487708948,
-    0.9059929494712103
-    ],
-    [
-    0.30383480825958703,
-    0.3871915393654524,
-    0.6529006882989183,
-    0.3871915393654524
-    ],
-    [
-    0.17551622418879056,
-    0.14218566392479437,
-    0.35644051130776794,
-    0.1498237367802585
-    ],
-    [
-    0.49262536873156343,
-    0.6415981198589894,
-    0.6524090462143559,
-    0.6351351351351351
-    ],
-    [
-    0.872173058013766,
-    0.23207990599294948,
-    0.8770894788593904,
-    0.5552291421856639
-    ],
-    [
-    0.5353982300884956,
-    0.2779083431257344,
-    0.6091445427728613,
-    0.28554641598119856
-    ],
-    [
-    0.8411996066863323,
-    0.5593419506462984,
-    1.0,
-    0.5399529964747356
-    ],
-    [
-    0.13126843657817108,
-    0.47238542890716806,
-    0.13962635201573254,
-    0.6562867215041128
-    ],
-    [
-    0.8682399213372665,
-    0.3695652173913043,
-    0.8682399213372665,
-    0.23207990599294948
-    ],
-    [
-    0.5245821042281219,
-    0.30141010575793187,
-    0.6047197640117994,
-    0.2984723854289072
-    ],
-    [
-    0.31268436578171094,
-    0.2209165687426557,
-    0.3525073746312684,
-    0.26850763807285544
-    ],
-    [
-    0.6406096361848574,
-    0.009400705052878966,
-    0.6425762045231072,
-    0.16216216216216217
-    ],
-    [
-    0.0,
-    0.0,
-    0.0014749262536873156,
-    0.12220916568742655
-    ],
-    [
-    0.255653883972468,
-    0.19741480611045828,
-    0.2664700098328417,
-    0.3484136310223267
-    ],
-    [
-    0.6597836774827925,
-    0.18801410105757932,
-    0.6607669616519174,
-    0.2491186839012926
-    ],
-    [
-    0.8790560471976401,
-    0.4189189189189189,
-    0.8815142576204523,
-    0.23207990599294948
-    ],
-    [
-    0.1111111111111111,
-    0.3372502937720329,
-    0.11946902654867257,
-    0.47473560517038776
-    ],
-    [
-    0.7364798426745329,
-    0.681551116333725,
-    0.8151425762045231,
-    0.7044653349001175
-    ],
-    [
-    0.8215339233038348,
-    0.9012925969447708,
-    0.8711897738446411,
-    0.9606345475910694
-    ],
-    [
-    0.32890855457227136,
-    0.0099882491186839,
-    0.3308751229105211,
-    0.15158636897767333
-    ],
-    [
-    0.8505408062930186,
-    0.7961222091656874,
-    1.0,
-    0.7961222091656874
-    ],
-    [
-    0.6691248770894789,
-    0.3484136310223267,
-    0.727630285152409,
-    0.3484136310223267
-    ],
-    [
-    0.283677482792527,
-    0.5423031727379554,
-    0.2895771878072763,
-    0.6504112808460635
-    ],
-    [
-    0.4119960668633235,
-    0.6251468860164512,
-    0.45968534906588004,
-    0.68213866039953
-    ],
-    [
-    0.8298918387413963,
-    0.6921269095182139,
-    0.8672566371681416,
-    0.72737955346651
-    ],
-    [
-    0.08849557522123894,
-    0.2191539365452409,
-    0.12389380530973451,
-    0.2408930669800235
-    ],
-    [
-    0.7148475909537857,
-    0.5511163337250293,
-    0.7227138643067846,
-    0.6844888366627497
-    ],
-    [
-    0.511307767944936,
-    0.5235017626321974,
-    0.511307767944936,
-    0.463572267920094
-    ],
-    [
-    0.4060963618485742,
-    0.08578143360752057,
-    0.5378564405113078,
-    0.0881316098707403
-    ],
-    [
-    0.551622418879056,
-    0.24383078730904817,
-    0.6091445427728613,
-    0.26321974148061106
-    ],
-    [
-    0.7482792527040315,
-    0.663924794359577,
-    0.8151425762045231,
-    0.7097532314923619
-    ],
-    [
-    0.08259587020648967,
-    0.01410105757931845,
-    0.1288102261553589,
-    0.01645123384253819
-    ],
-    [
-    0.10619469026548672,
-    0.0,
-    0.16175024582104228,
-    0.04465334900117509
-    ]
-    ];
+let floorLines = [];
+// Function to draw the lines on the canvas
+function loadLines() {
+    // Assuming footprint is already defined and added to the canvas
+    const footprint = canvas.getObjects('polygon')[0]; // Get the first polygon object (footprint)
 
-    // Function to draw the lines on the canvas
-    function loadLines() {
-        // Assuming footprint is already defined and added to the canvas
-        const footprint = canvas.getObjects('polygon')[0]; // Get the first polygon object (footprint)
-
-        if (!footprint) {
-            console.error("Footprint not found on the canvas.");
-            return;
-        }
-
-        const footprintWidth = footprint.width * footprint.scaleX;
-        const footprintHeight = footprint.height * footprint.scaleY;
-        const footprintLeft = footprint.left;
-        const footprintTop = footprint.top;
-
-        floorLines.forEach(line => {
-            const [x1, y1, x2, y2] = line;
-
-            // Scale and position the lines relative to the footprint
-            const scaledX1 = footprintLeft + x1 * footprintWidth;
-            const scaledY1 = footprintTop + y1 * footprintHeight;
-            const scaledX2 = footprintLeft + x2 * footprintWidth;
-            const scaledY2 = footprintTop + y2 * footprintHeight;
-
-            const lineObj = new fabric.Line([scaledX1, scaledY1, scaledX2, scaledY2], {
-                stroke: 'black',
-                strokeWidth: 2,
-                selectable: false,
-                isWallLine: true,
-            });
-            canvas.add(lineObj);
-        });
+    if (!footprint) {
+        console.error("Footprint not found on the canvas.");
+        return;
     }
+
+    const footprintWidth = footprint.width * footprint.scaleX;
+    const footprintHeight = footprint.height * footprint.scaleY;
+    const footprintLeft = footprint.left;
+    const footprintTop = footprint.top;
+
+    floorLines.forEach(line => {
+        const [x1, y1, x2, y2] = line;
+
+        // Scale and position the lines relative to the footprint
+        const scaledX1 = footprintLeft + x1 * footprintWidth;
+        const scaledY1 = footprintTop + y1 * footprintHeight;
+        const scaledX2 = footprintLeft + x2 * footprintWidth;
+        const scaledY2 = footprintTop + y2 * footprintHeight;
+
+        const lineObj = new fabric.Line([scaledX1, scaledY1, scaledX2, scaledY2], {
+            stroke: 'black',
+            strokeWidth: 2,
+            selectable: false,
+            isWallLine: true,
+        });
+        canvas.add(lineObj);
+    });
+}
