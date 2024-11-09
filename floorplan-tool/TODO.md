@@ -1,12 +1,13 @@
 [x] Add ground to 3D
 [ ] Add floorplan to SVG
 [ ] Export 3D object
-[ ] Deploy on gh pages
+[x] Deploy on gh pages
 [ ] Export video of the animation
 [ ] Show mouse controls on page (or on pressing a specific button etc)
-[ ] Change number of floors should update the building model instantly
+[x] Change number of floors should update the building model instantly
+[ ] Add instructions from first page: select a building
+[ ] Make it work nice on mobile
 
- 
 Stretch goals
 [ ] Change number of people should be reflected on play animation
 [ ] Reverse animation (going back out of the building)

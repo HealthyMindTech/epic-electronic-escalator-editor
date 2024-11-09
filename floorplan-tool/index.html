@@ -37,7 +37,7 @@
 </head>
 <body>
     <h1>Find and Draw Building Floorplans</h1>
-    <div id="map"></div>
+    <div id="map" style="cursor: pointer"></div>
 
     <div id="canvasContainer">
         <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
@@ -45,6 +45,9 @@
 
     <div id="controls">
         <button onclick="enableDrawLine()">Draw Wall</button>
+        <!-- Add this input element to your HTML where appropriate -->
+        <input type="file" id="imageLoader" name="imageLoader" accept="image/*" />
+        <button id="lockImageButton">Lock Image</button>
         <!-- <button onclick="enableDrawRect()">Draw Door/Feature</button> -->
         <button onclick="clearCanvas()">Clear</button>
         <button onclick="saveSVG()">Save as SVG</button>
