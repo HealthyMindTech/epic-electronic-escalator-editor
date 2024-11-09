@@ -742,7 +742,6 @@
             // Handle adding elevator
             if (isAddingElevator) {
                 const floorIntersects = raycaster.intersectObjects(floorObjects);
-                console.log(floorIntersects);
                 if (floorIntersects.length > 0) {
                     const intersect = floorIntersects[0];
                     const clickedPosition = intersect.point;
