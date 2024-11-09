@@ -14,7 +14,30 @@ There is furthermore a 3d simulation of buildings available, fed with info from 
 
 In addition this repo contains a simply python AI web service that attempts to parse images of floor plans to map onto the building footprints retrieved from openstreetmap. This webservice is not always completely successful, but often works for simple demonstration purposes.
 
+# Running
 
+Running this code is very easy, a simple way is to:
+
+```
+cd floormap-tool
+python -mhttp.server
+```
+And then point your browser at http://localhost:8080
+
+To start the webservice, do:
+
+```
+cd python
+```
+python -mvenv env
+. env/bin/activate
+pip install -r requirements-mini.txt
+flask run
+```
+
+And the webservice will be available in http://localhost:5000
+
+The webservice can handle pdf, png and jpg files of floorplans.
 
 
 
