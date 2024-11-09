@@ -201,6 +201,142 @@
         const elevatorDepth = 1;
         const scale = 0.1; // Adjust this scale as needed
 
+        // Parameters for the grid
+        const gridCellSize = 0.5; // Adjust as needed
+        let grids = {}; // Store grids for each floor
+
+        class Node {
+            constructor(x, y, walkable) {
+                this.x = x; // Grid coordinate
+                this.y = y; // Grid coordinate
+                this.walkable = walkable;
+
+                this.g = 0;
+                this.h = 0;
+                this.f = 0;
+                this.parent = null;
+            }
+        }
+
+        function findPath(startPos, endPos, floorIdx) {
+            const gridData = grids[floorIdx];
+            const { grid, minX, minZ, width, height } = gridData;
+
+            // Convert positions to grid indices
+            function positionToGrid(pos) {
+                const x = Math.floor((pos.x - minX) / gridCellSize);
+                const y = Math.floor((pos.z - minZ) / gridCellSize);
+                return { x, y };
+            }
+
+            function gridToPosition(x, y) {
+                const posX = minX + x * gridCellSize + gridCellSize / 2;
+                const posZ = minZ + y * gridCellSize + gridCellSize / 2;
+                return new THREE.Vector3(posX, startPos.y, posZ);
+            }
+
+            const startGrid = positionToGrid(startPos);
+            const endGrid = positionToGrid(endPos);
+
+            // Validate positions
+            if (
+                startGrid.x < 0 || startGrid.x >= width || startGrid.y < 0 || startGrid.y >= height ||
+                endGrid.x < 0 || endGrid.x >= width || endGrid.y < 0 || endGrid.y >= height
+            ) {
+                console.error("Start or end position is outside the grid.");
+                return null;
+            }
+
+            // Initialize nodes grid
+            let nodes = [];
+            for (let i = 0; i < height; i++) {
+                nodes[i] = [];
+                for (let j = 0; j < width; j++) {
+                    nodes[i][j] = new Node(j, i, grid[i][j] === 0);
+                }
+            }
+
+            let openList = [];
+            let closedList = [];
+
+            let startNode = nodes[startGrid.y][startGrid.x];
+            let endNode = nodes[endGrid.y][endGrid.x];
+
+            openList.push(startNode);
+
+            while (openList.length > 0) {
+                // Get node with lowest f
+                let currentNode = openList.reduce((prev, curr) => (prev.f < curr.f ? prev : curr));
+
+                if (currentNode === endNode) {
+                    // Path found
+                    let path = [];
+                    let curr = currentNode;
+                    while (curr !== null) {
+                        path.push(gridToPosition(curr.x, curr.y));
+                        curr = curr.parent;
+                    }
+                    path.reverse();
+                    return path;
+                }
+
+                // Move current node from open to closed list
+                openList = openList.filter(node => node !== currentNode);
+                closedList.push(currentNode);
+
+                // Get neighbors
+                let neighbors = getNeighbors(currentNode, nodes, width, height);
+
+                neighbors.forEach(neighbor => {
+                    if (!neighbor.walkable || closedList.includes(neighbor)) return;
+
+                    let tentativeG = currentNode.g + distanceBetween(currentNode, neighbor);
+
+                    if (!openList.includes(neighbor)) {
+                        neighbor.parent = currentNode;
+                        neighbor.g = tentativeG;
+                        neighbor.h = heuristic(neighbor, endNode);
+                        neighbor.f = neighbor.g + neighbor.h;
+                        openList.push(neighbor);
+                    } else if (tentativeG < neighbor.g) {
+                        neighbor.parent = currentNode;
+                        neighbor.g = tentativeG;
+                        neighbor.f = neighbor.g + neighbor.h;
+                    }
+                });
+            }
+
+            // No path found
+            return null;
+
+            function getNeighbors(node, nodes, width, height) {
+                let neighbors = [];
+                const dx = [-1, 0, 1, 0];
+                const dy = [0, -1, 0, 1];
+
+                for (let i = 0; i < 4; i++) {
+                    const x = node.x + dx[i];
+                    const y = node.y + dy[i];
+
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        neighbors.push(nodes[y][x]);
+                    }
+                }
+                return neighbors;
+            }
+
+            function distanceBetween(a, b) {
+                return 1; // Assuming uniform cost
+            }
+
+            function heuristic(a, b) {
+                // Use Manhattan distance
+                return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+            }
+        }
+
+
+
         // Load SVG
         function loadSVG(event) {
             const file = event.target.files[0];
@@ -353,11 +489,12 @@
             const roofMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
             const roof = new THREE.Mesh(roofGeometry, roofMaterial);
             roof.rotation.x = Math.PI / 2; // Lay flat
-            roof.position.y = numFloors * floorHeight * scale; // Move roof to top of building
+            roof.position.y = numFloors * floorHeight; // Move roof to top of building
             scene.add(roof);
 
             // Add people in the building
             // addPeople();
+            createGridsForFloors(points, lines);
         }
 
         // Function to parse the "transform" attribute for translation
@@ -374,22 +511,118 @@
             return { translateX, translateY };
         }
 
-        // Function to create a box (floor or wall)
-        function createBox(width, height, depth, color, position, isWall = false, opacity = 1) {
-            const geometry = new THREE.BoxGeometry(width, height, depth);
-            const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity });
-            const box = new THREE.Mesh(geometry, material);
-            box.position.set(position.x, position.y, position.z);
-            scene.add(box);
+        function isPointInPolygon(point, polygon) {
+            let inside = false;
+            const x = point.x, y = point.y;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i].x, yi = polygon[i].y;
+                const xj = polygon[j].x, yj = polygon[j].y;
 
-            // Add to appropriate array
-            if (isWall) {
-                wallObjects.push(box);
-            } else {
-                floorObjects.push(box);
+                const intersect = ((yi > y) !== (yj > y)) &&
+                                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
             }
-            return box;
+            return inside;
         }
+
+
+        function createGridsForFloors(points, lines) {
+            // For each floor, create a grid
+            console.log("Creating grids for each floor.");
+            for (let f = 0; f < numFloors; f++) {
+                const yOffset = f * floorHeight;
+
+                // Calculate bounding box of the floor
+                const floorBoundingBox = new THREE.Box3().setFromPoints(
+                    points.map(p => new THREE.Vector3(p.x * scale, yOffset, p.z * scale))
+                );
+
+                // Determine grid dimensions
+                const minX = floorBoundingBox.min.x;
+                const maxX = floorBoundingBox.max.x;
+                const minZ = floorBoundingBox.min.z;
+                const maxZ = floorBoundingBox.max.z;
+
+                const gridWidth = Math.ceil((maxX - minX) / gridCellSize);
+                const gridHeight = Math.ceil((maxZ - minZ) / gridCellSize);
+
+                // Initialize grid
+                let grid = new Array(gridHeight);
+                for (let i = 0; i < gridHeight; i++) {
+                    grid[i] = new Array(gridWidth).fill(0); // 0 = walkable, 1 = blocked
+                }
+
+                // Create floor shape for containment checks
+                let floorShape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
+
+                // Mark cells outside the floor shape as blocked
+                for (let i = 0; i < gridHeight; i++) {
+                    for (let j = 0; j < gridWidth; j++) {
+                        const x = minX + j * gridCellSize + gridCellSize / 2;
+                        const z = minZ + i * gridCellSize + gridCellSize / 2;
+                        const point = new THREE.Vector2(x, z);
+                        if (!isPointInPolygon(point, floorShape.getPoints())) {
+                            grid[i][j] = 1; // Blocked
+                        }
+                    }
+                }
+
+                // Collect all walls on this floor
+                let allWalls = [];
+
+                // Outer walls
+                for (let i = 0; i < points.length; i++) {
+                    const start = points[i];
+                    const end = points[(i + 1) % points.length];
+                    allWalls.push({
+                        start: new THREE.Vector2(start.x * scale, start.z * scale),
+                        end: new THREE.Vector2(end.x * scale, end.z * scale)
+                    });
+                }
+
+                // Inner walls
+                lines.forEach(({ start, end }) => {
+                    allWalls.push({
+                        start: new THREE.Vector2(start.x * scale, start.z * scale),
+                        end: new THREE.Vector2(end.x * scale, end.z * scale)
+                    });
+                });
+
+                // Mark wall cells as blocked
+                allWalls.forEach(wall => {
+                    const wallStart = wall.start;
+                    const wallEnd = wall.end;
+
+                    // Number of steps to sample along the wall
+                    const wallLength = wallStart.distanceTo(wallEnd);
+                    const steps = Math.ceil(wallLength / (gridCellSize / 2));
+
+                    for (let s = 0; s <= steps; s++) {
+                        const t = s / steps;
+                        const x = THREE.MathUtils.lerp(wallStart.x, wallEnd.x, t);
+                        const z = THREE.MathUtils.lerp(wallStart.y, wallEnd.y, t);
+
+                        const i = Math.floor((z - minZ) / gridCellSize);
+                        const j = Math.floor((x - minX) / gridCellSize);
+
+                        if (i >= 0 && i < gridHeight && j >= 0 && j < gridWidth) {
+                            grid[i][j] = 1; // Blocked
+                        }
+                    }
+                });
+
+                // Store the grid for this floor
+                console.log("Grid created for floor", f, "with dimensions", gridWidth, "x", gridHeight);
+                grids[f] = {
+                    grid: grid,
+                    minX: minX,
+                    minZ: minZ,
+                    width: gridWidth,
+                    height: gridHeight
+                };
+            }
+        }
+
 
         // Clear existing building elements
         function clearBuilding() {
@@ -540,13 +773,13 @@
             let floorIdx = 0; // Default to ground floor
             if (peopleSpawnPoint) {
                 // Place person at spawn point
-                floorIdx = Math.floor(peopleSpawnPoint.y / (floorHeight * scale));
-                const yPos = floorIdx * floorHeight * scale + 0.2;
+                floorIdx = Math.floor(peopleSpawnPoint.y / (floorHeight));
+                const yPos = floorIdx * floorHeight + 0.2;
                 person.position.set(peopleSpawnPoint.x, yPos, peopleSpawnPoint.z);
             } else {
                 // Random floor
                 floorIdx = Math.floor(Math.random() * numFloors);
-                const yPos = floorIdx * floorHeight * scale + 0.2;
+                const yPos = floorIdx * floorHeight + 0.2;
                 person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
             }
         }
@@ -569,21 +802,24 @@
             addPeople();
             isSimulationRunning = true;
             movingPeople = people.map(person => {
-                const currentFloor = Math.floor(person.position.y / (floorHeight * scale));
+                const currentFloor = Math.floor(person.position.y / (floorHeight));
                 let targetFloor = chooseRandomTargetFloor(currentFloor);
+
                 return {
                     mesh: person,
                     floor: currentFloor,
                     destinationFloor: targetFloor,
-                    destinationPosition: getRandomDestinationWithinFloor(targetFloor),
+                    path: null,
+                    pathIndex: 0,
                     speed: 0.02 + Math.random() * 0.05,
                     inElevator: false,
-                    goingToElevator: true,
+                    goingToElevator: currentFloor !== targetFloor,
                     elevator: findClosestElevator(person.position)
                 };
             });
             animatePeople();
         }
+
 
 
         function findClosestElevator(personPosition) {
@@ -603,26 +839,62 @@
             movingPeople.forEach(person => {
                 const { mesh, floor, destinationFloor, speed, goingToElevator, elevator } = person;
 
-                if (floor === destinationFloor && !goingToElevator) {
-                    // Move to the random position on the destination floor
-                    movePerson(mesh, person.destinationPosition, speed);
-                } else if (goingToElevator) {
-                    // Move to the elevator position on the same floor
-                    const elevatorTargetPosition = new THREE.Vector3(elevator.position.x, mesh.position.y, elevator.position.z);
-                    movePerson(mesh, elevatorTargetPosition, speed);
+                if (floor === destinationFloor && !person.inElevator) {
+                    // Moving to destination within the same floor
+                    if (!person.path) {
+                        const startPos = mesh.position.clone();
+                        person.destinationPosition = getRandomDestinationWithinFloor(destinationFloor);
+                        person.path = findPath(startPos, person.destinationPosition, floor);
+                        person.pathIndex = 0;
+                        if (!person.path) {
+                            console.error("No path found for person on floor", floor);
+                            return;
+                        }
+                    }
 
-                    if (mesh.position.distanceTo(elevatorTargetPosition) < 0.1) {
+                    if (person.pathIndex < person.path.length) {
+                        const targetPosition = person.path[person.pathIndex];
+                        movePerson(mesh, targetPosition, speed);
+
+                        if (mesh.position.distanceTo(targetPosition) < 0.05) {
+                            person.pathIndex++;
+                        }
+                    }
+                } else if (goingToElevator) {
+                    // Moving to the elevator
+                    if (!person.path) {
+                        const elevatorPos = new THREE.Vector3(elevator.position.x, mesh.position.y, elevator.position.z);
+                        person.path = findPath(mesh.position.clone(), elevatorPos, floor);
+                        person.pathIndex = 0;
+                        if (!person.path) {
+                            console.error("No path to elevator found for person on floor", floor);
+                            return;
+                        }
+                    }
+
+                    if (person.pathIndex < person.path.length) {
+                        const targetPosition = person.path[person.pathIndex];
+                        movePerson(mesh, targetPosition, speed);
+
+                        if (mesh.position.distanceTo(targetPosition) < 0.05) {
+                            person.pathIndex++;
+                        }
+                    } else {
+                        // Reached elevator
                         person.inElevator = true;
                         person.goingToElevator = false;
+                        person.path = null;
                     }
                 } else if (person.inElevator) {
-                    // Move vertically to the destination floor in the elevator
-                    const destination = new THREE.Vector3(mesh.position.x, destinationFloor * 3 + 0.2, mesh.position.z);
-                    movePerson(mesh, destination, speed);
-
-                    if (Math.abs(mesh.position.y - destination.y) < 0.1) {
+                    // Moving vertically in the elevator
+                    const destinationY = destinationFloor * floorHeight + 0.2;
+                    if (Math.abs(mesh.position.y - destinationY) > 0.05) {
+                        mesh.position.y += Math.sign(destinationY - mesh.position.y) * speed;
+                    } else {
+                        mesh.position.y = destinationY;
                         person.floor = destinationFloor;
                         person.inElevator = false;
+                        person.path = null;
                     }
                 }
             });
@@ -631,10 +903,41 @@
             if (isSimulationRunning) requestAnimationFrame(animatePeople);
         }
 
+
         function movePerson(mesh, destination, speed) {
-            const direction = new THREE.Vector3().subVectors(destination, mesh.position).normalize();
-            mesh.position.add(direction.multiplyScalar(speed));
+            const direction = new THREE.Vector3().subVectors(destination, mesh.position);
+            const distance = direction.length();
+            direction.normalize();
+
+            const moveDistance = Math.min(speed, distance);
+            mesh.position.add(direction.multiplyScalar(moveDistance));
         }
+
+
+        function visualizeGrid(floorIdx) {
+            const gridData = grids[floorIdx];
+            const { grid, minX, minZ, width, height } = gridData;
+
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
+                    const x = minX + j * gridCellSize + gridCellSize / 2;
+                    const z = minZ + i * gridCellSize + gridCellSize / 2;
+                    const y = floorIdx * floorHeight + 0.1;
+
+                    const color = grid[i][j] === 0 ? 0x00ff00 : 0xff0000;
+                    const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.3 });
+                    const geometry = new THREE.PlaneGeometry(gridCellSize, gridCellSize);
+                    const cell = new THREE.Mesh(geometry, material);
+                    cell.rotation.x = -Math.PI / 2; // Lie flat
+                    cell.position.set(x, y, z);
+                    scene.add(cell);
+                }
+            }
+        }
+
+        // Call this function for the desired floor
+        // visualizeGrid(0); // Visualize grid for floor 0
+
 
         function getRandomDestinationWithinFloor(floor) {
             const yPos = floor * 3 + 0.2;
