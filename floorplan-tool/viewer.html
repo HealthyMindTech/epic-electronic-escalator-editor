@@ -201,6 +201,8 @@
         const elevatorWidth = 1;
         const elevatorDepth = 1;
         const scale = 0.1; // Adjust this scale as needed
+        const personBaseSpeed = 0.02;
+        const elevatorSpeed = 0.05;
 
         // Parameters for the grid
         const gridCellSize = 0.5; // Adjust as needed
@@ -818,7 +820,7 @@
                     destinationFloor: targetFloor,
                     path: null,
                     pathIndex: 0,
-                    speed: 0.02 + Math.random() * 0.05,
+                    speed: personBaseSpeed + Math.random() * 0.05,
                     inElevator: false,
                     goingToElevator: currentFloor !== targetFloor,
                     elevator: findClosestElevator(person.position)
@@ -896,7 +898,7 @@
                     // Moving vertically in the elevator
                     const destinationY = destinationFloor * floorHeight + 0.2;
                     if (Math.abs(mesh.position.y - destinationY) > 0.05) {
-                        mesh.position.y += Math.sign(destinationY - mesh.position.y) * speed;
+                        mesh.position.y += Math.sign(destinationY - mesh.position.y) * elevatorSpeed;
                     } else {
                         mesh.position.y = destinationY;
                         person.floor = destinationFloor;
