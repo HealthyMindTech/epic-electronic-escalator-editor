@@ -17,6 +17,9 @@
             width: 100%;
             margin-bottom: 20px;
         }
+        #street-view { 
+            height: 50vh; 
+        }
         #canvasContainer {
             display: flex;
             justify-content: center;
@@ -43,6 +46,8 @@
         <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
     </div>
 
+    <div id="street-view"></div>
+
     <div id="controls">
         <button onclick="enableDrawLine()">Draw Wall</button>
         <button onclick="enableDrawRect()">Draw Door/Feature</button>
@@ -54,6 +59,7 @@
     <!-- Leaflet and OSM Buildings JavaScript -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
     <script src="app.js"></script>
     <script>
         // Initialize the map
@@ -70,7 +76,7 @@
         const osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
 
         // Locate and center on user's location
-        map.locate({ setView: true, maxZoom: 18 });
+        //map.locate({ setView: true, maxZoom: 18 });
 
         // Add event listener to handle location found
         map.on('locationfound', (e) => {
@@ -89,6 +95,7 @@
         map.on('click', function(e) {
             const { lat, lng } = e.latlng;
             fetchBuildingFootprint(lat, lng);
+            showStreetView(lat, lng);
         });
 
     </script>

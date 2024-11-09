@@ -265,6 +265,15 @@ function fetchBuildingFootprint(lat, lng) {
         });
 }
 
+// Function to show street view
+function showStreetView(lat, lng) {
+    const streetViewDiv = document.getElementById('street-view');
+    const panorama = new google.maps.StreetViewPanorama(streetViewDiv, {
+        position: { lat: lat, lng: lng },
+        pov: { heading: 165, pitch: 0 },
+        zoom: 1
+    });
+}
 
 function extractCoordinates(data) {
     const nodes = {};
