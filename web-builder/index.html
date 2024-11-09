@@ -149,7 +149,7 @@
         const wallColor = 0x888888;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
-        const scale = 0.5; // Adjust this scale as needed
+        const scale = 0.1; // Adjust this scale as needed
 
         // Load SVG
         function loadSVG(event) {
@@ -197,6 +197,31 @@
             reader.readAsText(file);
         }
 
+        function positionCameraToViewBuilding(points) {
+            // Calculate bounding box of the building
+            const boundingBox = new THREE.Box3().setFromPoints(points);
+            const center = new THREE.Vector3();
+            boundingBox.getCenter(center);
+
+            // Adjust for scaling
+            center.multiplyScalar(scale);
+
+            // Calculate size of the bounding box
+            const size = boundingBox.getSize(new THREE.Vector3()).multiplyScalar(scale);
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            // Calculate an appropriate distance for the camera
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraDistance = maxDim / (2 * Math.tan(fov / 2));
+
+            // Set the camera position based on the size of the building
+            camera.position.set(center.x, center.y + cameraDistance, center.z + cameraDistance);
+
+            // Update controls to focus on the building's center
+            controls.target.copy(center);
+            controls.update();
+        }
+
         function buildBuildingFromSVGData(points, lines) {
             clearBuilding();
 
@@ -206,7 +231,7 @@
 
             // Create floors and walls for each level
             for (let f = 0; f < numFloors; f++) {
-                const yOffset = f * floorHeight * scale;
+                const yOffset = f * floorHeight //* scale;
 
                 // Create the floor
                 const shape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
@@ -223,7 +248,7 @@
                     const start = points[i];
                     const end = points[(i + 1) % points.length];
 
-                    const wallHeight = roomHeight * scale;
+                    const wallHeight = roomHeight// * scale;
                     const wallWidth = start.distanceTo(end) * scale;
 
                     // Calculate the wall's center position
@@ -249,7 +274,7 @@
 
                 // Create inner walls from line elements
                 lines.forEach(({ start, end }) => {
-                    const wallHeight = roomHeight * scale;
+                    const wallHeight = roomHeight //* scale;
                     const wallWidth = start.distanceTo(end) * scale;
 
                     // Calculate the wall's center position
@@ -534,17 +559,6 @@
         }
 
         function stopSimulation() { isSimulationRunning = false; }
-
-        function positionCameraToViewBuilding(points) {
-            // Calculate bounding box of the building
-            const boundingBox = new THREE.Box3().setFromPoints(points);
-            const center = new THREE.Vector3();
-            boundingBox.getCenter(center);
-
-            // Set the camera position to view the building from above
-            camera.position.set(center.x, center.y + 50, center.z + 50);
-            camera.lookAt(center); // Ensure the camera points at the center of the building
-        }
 
         // Event listener for mouse clicks
         window.addEventListener('click', onMouseClick, false);
