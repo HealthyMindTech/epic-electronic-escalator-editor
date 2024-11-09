@@ -33,6 +33,13 @@ function saveSVG() {
     link.click();
 }
 
+// Open a new tab with the Viewer using the SVG data from the canvas
+function openViewer() {
+    const svgData = canvas.toSVG();
+    const viewerURL = `viewer.html?svg=${encodeURIComponent(svgData)}`;
+    window.open(viewerURL, '_blank');
+}
+
 // Draw footprint on the canvas
 function drawFootprintOnCanvas(coordinates) {
     const canvasWidth = 800; // Set based on your actual canvas dimensions
