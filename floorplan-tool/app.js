@@ -68,7 +68,7 @@ canvas.selection = false;
 
 // Create a text object to display the current mode
 const modeDisplay = new fabric.Text(currentMode, {
-    left: canvas.getWidth() - 200, // Adjust position as needed
+    left: canvas.getWidth() - 250, // Adjust position as needed
     top: 10,
     fontSize: 18,
     fontFamily: 'Arial',
@@ -120,8 +120,19 @@ function handleImage(e) {
     const reader = new FileReader();
     reader.onload = function (event) {
         const imgObj = new Image();
+        const data = new FormData();
+        data.append('file', e.target.files[0]);
+
+        const url = "https://python-wandering-dream-160.fly.dev/upload";
+
+        fetch(url, {
+            method: 'POST',
+            body: data
+        }).then(response => console.log(response.json()));
+
         imgObj.src = event.target.result;
         imgObj.onload = function () {
+            lockImageButton.className = "btn btn-primary text-gray-200";
             const image = new fabric.Image(imgObj);
 
              // Calculate the scaling factors
@@ -163,7 +174,7 @@ function handleImage(e) {
             floorplanImage = image;
             toggleLockImage('Floorplan Image Editing Mode');
             canvas.renderAll();
-            
+
             // Keep a reference to the floorplan image
 
             // Send the image to the back
@@ -582,7 +593,7 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
     if (infoText) {
         canvas.add(infoText);
     }
-    
+
     // Add the mode display to the canvas
     canvas.add(modeDisplay);
 
