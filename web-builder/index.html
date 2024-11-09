@@ -68,6 +68,8 @@
         <button onclick="startSimulation()">Play Animation</button>
         <button onclick="stopSimulation()">Stop Animation</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
+        <button onclick="enableElevatorAdding()">Add Elevator</button>
+        <button onclick="enableSpawnPointSetting()">Set People Spawn Point</button>
     </div>
 
     <!-- Popup for elevator actions -->
@@ -128,6 +130,28 @@
         let floorObjects = [], wallObjects = [], isSimulationRunning = false;
         let isMovingElevator = false;
 
+        let isAddingElevator = false;
+        let isSettingSpawnPoint = false;
+        let peopleSpawnPoint = null;
+
+        function enableElevatorAdding() {
+            setTimeout(() => {
+                isAddingElevator = true;
+                isSettingSpawnPoint = false;
+            }, 50);
+            // Provide visual feedback
+            alert("Click on the floor to add an elevator.");
+        }
+
+        function enableSpawnPointSetting() {
+            setTimeout(() => {
+                isSettingSpawnPoint = true;
+                isAddingElevator = false;
+            }, 50);
+            // Provide visual feedback
+            alert("Click on the floor to set the people spawn point.");
+        }
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -170,8 +194,8 @@
         const floorHeight = 3;      // Height of each floor
         const roomHeight = 2.9;     // Height of walls
         const wallThickness = 0.1;
-        const wallOpacity = 0.5;
-        const floorOpacity = 0.8;
+        const wallOpacity = 0.2;
+        const floorOpacity = 0.2;
         const wallColor = 0x888888;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
@@ -333,7 +357,7 @@
             scene.add(roof);
 
             // Add people in the building
-            addPeople();
+            // addPeople();
         }
 
         // Function to parse the "transform" attribute for translation
@@ -381,7 +405,7 @@
                 console.log("Maximum number of elevators reached.");
                 return;
             }
-            const elevatorHeight = numFloors * floorHeight * scale; // Ensure elevator matches building height
+            const elevatorHeight = numFloors * floorHeight; // Ensure elevator matches building height
             const geometry = new THREE.BoxGeometry(elevatorWidth, elevatorHeight, elevatorDepth);
             const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
             const elevatorBox = new THREE.Mesh(geometry, material);
@@ -441,7 +465,6 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // Function to handle mouse clicks
         function onMouseClick(event) {
             // Calculate mouse position in normalized device coordinates (-1 to +1)
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -449,7 +472,8 @@
 
             // Update raycaster with mouse position and camera
             raycaster.setFromCamera(mouse, camera);
-
+            console.log("Click detected.", isMovingElevator, isAddingElevator, isSettingSpawnPoint);
+            // If moving elevator, handle that first
             if (isMovingElevator && selectedElevator) {
                 // Move the selected elevator to the clicked location
                 const floorIntersects = raycaster.intersectObjects(floorObjects);
@@ -462,6 +486,34 @@
                 return;
             }
 
+            // Handle adding elevator
+            if (isAddingElevator) {
+                const floorIntersects = raycaster.intersectObjects(floorObjects);
+                console.log(floorIntersects);
+                if (floorIntersects.length > 0) {
+                    const intersect = floorIntersects[0];
+                    const clickedPosition = intersect.point;
+                    addElevator(clickedPosition);
+                    console.log("Elevator added at:", clickedPosition);
+                }
+                isAddingElevator = false; // Turn off the mode after adding elevator
+                return;
+            }
+
+            // Handle setting spawn point
+            if (isSettingSpawnPoint) {
+                const floorIntersects = raycaster.intersectObjects(floorObjects);
+                if (floorIntersects.length > 0) {
+                    const intersect = floorIntersects[0];
+                    peopleSpawnPoint = intersect.point;
+                    alert("People spawn point set.");
+                    console.log("People spawn point set at:", peopleSpawnPoint);
+                }
+                isSettingSpawnPoint = false;
+                return;
+            }
+
+            // Existing code for elevator interaction
             // Check for intersections with elevators first
             const elevatorIntersects = raycaster.intersectObjects(elevators);
             if (elevatorIntersects.length > 0) {
@@ -472,15 +524,8 @@
 
             // Hide popup if clicking anywhere else
             hidePopup();
-
-            // Check for intersections with room floors to add elevator
-            const floorIntersects = raycaster.intersectObjects(floorObjects);
-            if (floorIntersects.length > 0) {
-                const intersect = floorIntersects[0];
-                const clickedPosition = intersect.point;
-                addElevator(clickedPosition);
-            }
         }
+
 
         function addPeople() {
             for (let i = 0; i < maxPeople; i++) {
@@ -492,10 +537,20 @@
         }
 
         function placePersonAtRandomFloor(person) {
-            const floorIdx = Math.floor(Math.random() * numFloors);
-            const yPos = floorIdx * 3 + 0.2;
-            person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
+            let floorIdx = 0; // Default to ground floor
+            if (peopleSpawnPoint) {
+                // Place person at spawn point
+                floorIdx = Math.floor(peopleSpawnPoint.y / (floorHeight * scale));
+                const yPos = floorIdx * floorHeight * scale + 0.2;
+                person.position.set(peopleSpawnPoint.x, yPos, peopleSpawnPoint.z);
+            } else {
+                // Random floor
+                floorIdx = Math.floor(Math.random() * numFloors);
+                const yPos = floorIdx * floorHeight * scale + 0.2;
+                person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
+            }
         }
+
 
         function chooseRandomTargetFloor(currentFloor) {
             let targetFloor = Math.floor(Math.random() * numFloors);
@@ -508,13 +563,14 @@
         function startSimulation() {
             if (isSimulationRunning) return;
             if (elevators.length == 0) {
-                console.log("Need elevators to run simulation.");
+                alert("Need elevators to run simulation.");
                 return;
             }
+            addPeople();
             isSimulationRunning = true;
             movingPeople = people.map(person => {
-                const currentFloor = Math.floor(person.position.y / 3);
-                const targetFloor = chooseRandomTargetFloor(currentFloor);
+                const currentFloor = Math.floor(person.position.y / (floorHeight * scale));
+                let targetFloor = chooseRandomTargetFloor(currentFloor);
                 return {
                     mesh: person,
                     floor: currentFloor,
@@ -522,12 +578,13 @@
                     destinationPosition: getRandomDestinationWithinFloor(targetFloor),
                     speed: 0.02 + Math.random() * 0.05,
                     inElevator: false,
-                    goingToElevator: true,  // New flag to indicate movement towards elevator on the same floor
-                    elevator: findClosestElevator(person.position)  // Find the closest elevator initially
+                    goingToElevator: true,
+                    elevator: findClosestElevator(person.position)
                 };
             });
             animatePeople();
         }
+
 
         function findClosestElevator(personPosition) {
             let closestElevator = elevators[0];
