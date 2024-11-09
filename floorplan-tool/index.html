@@ -88,7 +88,7 @@
         🚀⚡🛗 Epic Electronic Escalator Editor
     </h1>
     <h2 class="text-lg text-center text-gray-600 mb-8">
-      Click on a building on the map, add some walls, and click the big green button!
+      Click on a building on the map, draw some walls, and click the big green button!
     </h2>
 
     <!-- Main container that holds both the map and the tool -->
@@ -105,15 +105,17 @@
         </div>
         <div class="mt-2 px-2 flex justify-between w-full">
           <div class="flex space-x-2">
-              <button class="btn btn-primary text-gray-200" onclick="clearCanvas()">
-                Clear Walls
+              <button class="btn btn-neutral text-gray-200" onclick="clearCanvas()">
+                🗑 &nbsp;Clear Walls
               </button>
               <button class="btn btn-primary text-gray-200 hidden" id="lockImageButton">
-                Lock Image
+                🔒 &nbsp;Lock Image
               </button>
+              <button class="btn btn-primary text-gray-200 hidden" id="deleteImageButton">🗑 &nbsp;Delete Image</button>
+
           </div>
           <button class="btn right-0" onclick="my_modal_1.showModal()">
-            Import floorplan
+            📁 &nbsp;Import floorplan
           </button>
         </div>
         <div id="canvasContainer" class="my-4">

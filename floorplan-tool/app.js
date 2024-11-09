@@ -145,9 +145,9 @@ function handleImage(e) {
         imgObj.src = event.target.result;
         imgObj.onload = function () {
             lockImageButton.className = "btn btn-primary text-gray-200";
-            imageBackground = new fabric.Image(imgObj);
+            deleteImageButton.className = "btn btn-primary text-gray-200";
             document.getElementById('show-image-button').className = "btn btn-warning";
-
+            imageBackground = new fabric.Image(imgObj);
         };
     };
     reader.readAsDataURL(e.target.files[0]);
@@ -156,6 +156,24 @@ function handleImage(e) {
 const lockImageButton = document.getElementById('lockImageButton');
 lockImageButton.addEventListener('click', () => toggleLockImage());
 
+// Add event listener to the delete image button
+const deleteImageButton = document.getElementById('deleteImageButton');
+deleteImageButton.addEventListener('click', () => deleteImage());
+
+
+function deleteImage() {
+    if (floorplanImage) {
+        canvas.remove(floorplanImage);
+        floorplanImage = null;
+
+        // Update button text and mode display
+        lockImageButton.textContent = '🔒 Lock Image';
+        lockImageButton.className = "btn btn-primary text-gray-200 hidden";
+        deleteImageButton.className = "btn btn-primary text-gray-200 hidden";
+        currentMode = 'Wall Drawing Mode';
+        modeDisplay.text = currentMode;
+    }
+}
 
 // Open a new tab with the Viewer using the SVG data from the canvas
 function openViewer() {
@@ -312,7 +330,7 @@ function toggleLockImage(forceSet = null) {
         // Send it to back
         canvas.sendToBack(floorplanImage);
         // Update button text
-        lockImageButton.textContent = 'Unlock Image';
+        lockImageButton.textContent = '🔒 Unlock Image';
 
         // Change mode to Wall Drawing Mode
         currentMode = 'Wall Drawing Mode';
@@ -326,7 +344,7 @@ function toggleLockImage(forceSet = null) {
         // Bring image to front (optional)
         // canvas.bringToFront(floorplanImage);
         // Update button text
-        lockImageButton.textContent = 'Lock Image';
+        lockImageButton.textContent = '🔒 Lock Image';
 
         // Change mode to Floorplan Image Editing Mode
         currentMode = 'Floorplan Image Editing Mode';
