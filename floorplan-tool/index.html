@@ -14,6 +14,13 @@
       href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"
       rel="stylesheet"
     />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
 
     <script
@@ -74,111 +81,89 @@
           height: 400px; /* Adjust for smaller screens */
         }
       }
-
-      /* Controls styles */
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 20px;
-      }
-      .controls button,
-      .controls input[type="file"] {
-        margin: 5px;
-      }
-
-      /* Responsive Design */
-      @media (max-width: 800px) {
-        #mainContainer {
-          flex-direction: column;
-        }
-        #map,
-        #toolContainer {
-          width: 100%;
-        }
-        #map {
-          height: 400px; /* Adjust for smaller screens */
-        }
-      }
-      /* Remove fixed width and height from the canvas element itself */
-      #floorPlanCanvas {
-        border: 1px solid #ccc;
-        width: 100%; /* Use 100% width, height will be set dynamically */
-        height: auto; /* Height will be controlled by JavaScript */
-      }
-
-      /* Style for the Open Viewer button */
-      .open-viewer-btn {
-        background-color: green;
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        }
-
-      .open-viewer-btn:hover {
-        background-color: darkgreen;
-      }
     </style>
   </head>
-  <body>
-    <h1>E3 Builder</h1>
-    <h2>Click on a building on the map</h2>
+  <body class="p-6 bg-gray-100">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
+      Epic Electronic Escalator Builder
+    </h1>
+    <h2 class="text-lg text-center text-gray-600 mb-8">
+      Click on a building on the map
+    </h2>
 
     <!-- Main container that holds both the map and the tool -->
     <div id="mainContainer">
       <!-- Map Section -->
-      <div id="map" style="cursor: pointer"></div>
+      <div id="map" class="rounded-lg shadow-lg" style="cursor: pointer"></div>
       <!-- Tool Section -->
-      <div id="toolContainer">
-        <div class="controls" style="position: absolute; top: 60px; right: 20px;">
-            <button onclick="saveSVG()">Save as SVG</button>
-            <button class="open-viewer-btn" onclick="openViewer()">Open Viewer</button>
-        </div>  
-        <div id="canvasContainer">
+      <div id="toolContainer" class="bg-white p-4 rounded-lg shadow-lg">
+        <div class="controls absolute top-4 right-4 space-x-2">
+          <!-- <button class="btn btn-neutral" onclick="saveSVG()">Save as SVG</button> -->
+          <button class="btn btn-primary" onclick="openViewer()">
+            Open Viewer
+          </button>
+        </div>
+        <div id="controls" class="controls space-x-2 mt-4">
+          <button class="btn" onclick="my_modal_1.showModal()">
+            Import floorplan
+          </button>
+          <button class="btn btn-accent" onclick="clearCanvas()">
+            Clear Walls
+          </button>
+          <button class="btn btn-secondary" id="lockImageButton">
+            Lock Image
+          </button>
+        </div>
+        <div id="canvasContainer" class="my-4">
           <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
         </div>
-
-        <div id="controls" class="controls">
-          <!-- <button onclick="enableDrawLine()">Draw Wall</button> -->
+      </div>
+    </div>
+    <dialog id="my_modal_1" class="modal">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold">Hello!</h3>
+        <p class="py-4">Press ESC key or click the button below to close</p>
+        <div class="modal-action">
           <input
             type="file"
             id="imageLoader"
             name="imageLoader"
             accept="image/*"
+            class="file-input file-input-bordered file-input-primary w-full max-w-xs"
           />
-          <button id="lockImageButton">Lock Image</button>
-
-          <button onclick="clearCanvas()">Clear walls</button>
-          <button onclick="saveSVG()">Save as SVG</button>
-          <button onclick="openViewer()">Open Viewer</button>
-          <button onclick="loadLines()">Load Lines</button>
+          <button class="btn btn-warning" onclick="loadLines()">
+            Load Lines
+          </button>
+          <form method="dialog">
+            <!-- if there is a button in form, it will close the modal -->
+            <button class="btn">Close</button>
+          </form>
         </div>
       </div>
-    </div>
-
+    </dialog>
     <!-- Leaflet and OSM Buildings JavaScript -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
     <script src="app.js"></script>
     <script>
-        // Initialize the map at Junction location
-        const map = L.map('map').setView([60.1618271,24.9037326], 16);
-        fetchBuildingFootprint(60.1618271,24.9037326);
-        // Add base layer
-        L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-            attribution: '© Data <a href="https://openstreetmap.org">OpenStreetMap</a>',
-            maxZoom: 20,
-            maxNativeZoom: 18
-        }).addTo(map);
+      // Initialize the map at Junction location
+      const map = L.map("map").setView([60.1618271, 24.9037326], 16);
+      fetchBuildingFootprint(60.1618271, 24.9037326);
+      // Add base layer
+      L.tileLayer("https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
+        attribution:
+          '© Data <a href="https://openstreetmap.org">OpenStreetMap</a>',
+        maxZoom: 20,
+        maxNativeZoom: 18,
+      }).addTo(map);
 
       // Add OSM Buildings for 3D buildings
       const osmb = new OSMBuildings(map).load(
         "https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json"
       );
 
-        // Locate and center on user's location
-        // map.locate({ setView: true, maxZoom: 18 });
+      // Locate and center on user's location
+      // map.locate({ setView: true, maxZoom: 18 });
 
       // Add event listener to handle location found
       map.on("locationfound", (e) => {

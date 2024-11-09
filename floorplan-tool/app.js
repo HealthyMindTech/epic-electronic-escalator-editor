@@ -1,6 +1,6 @@
 // Initialize Fabric.js canvas and set up responsive resizing
 const canvas = new fabric.Canvas('floorPlanCanvas');
-let aspectRatio = 4 / 3; // Define the desired aspect ratio (e.g., 4:3)
+let aspectRatio = 16 / 11; // Define the desired aspect ratio (e.g., 4:3)
 
 // Placeholder for the building object to center
 let buildingFootprint = null;
@@ -859,6 +859,7 @@ floorLines = [
                 stroke: 'black',
                 strokeWidth: 2,
                 selectable: false,
+                isWallLine: true,
             });
             canvas.add(lineObj);
         });
