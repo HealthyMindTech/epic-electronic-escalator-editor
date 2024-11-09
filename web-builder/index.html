@@ -60,11 +60,10 @@
     <!-- User Interface -->
     <div id="interface">
     <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)">
-    <form onsubmit="buildBuilding(); return false;">
+    <form onsubmit="return false;">
         <label>Number of Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
         <label>Number of Elevators: <input type="number" id="elevatorCount" value="2" min="1"></label><br>
         <label>Number of People: <input type="number" id="peopleCount" value="5" min="1"></label><br>
-        <button type="submit">Build Building</button>
     </form>
         <button onclick="startSimulation()">Play Animation</button>
         <button onclick="stopSimulation()">Stop Animation</button>
@@ -143,12 +142,14 @@
 
         // Building parameters
         const floorHeight = 3;      // Height of each floor
-        const roomHeight = 2.5;     // Height of walls
+        const roomHeight = 2.9;     // Height of walls
         const wallThickness = 0.1;
         const wallOpacity = 0.5;
+        const floorOpacity = 0.8;
         const wallColor = 0x888888;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
+        const scale = 0.5; // Adjust this scale as needed
 
         // Load SVG
         function loadSVG(event) {
@@ -198,72 +199,91 @@
 
         function buildBuildingFromSVGData(points, lines) {
             clearBuilding();
-            const scale = 0.5; // Adjust this scale as needed
 
-            // Create the floor
-            const shape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
-            const floorGeometry = new THREE.ExtrudeGeometry(shape, { depth: 0.1 * scale, bevelEnabled: false });
-            const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = Math.PI / 2; // Lay flat
-            scene.add(floor);
-            floorObjects.push(floor);
+            numFloors = parseInt(document.getElementById("floorCount").value);
+            maxElevators = parseInt(document.getElementById("elevatorCount").value);
+            maxPeople = parseInt(document.getElementById("peopleCount").value);
 
-            // Create outer walls between each pair of points
-            for (let i = 0; i < points.length; i++) {
-                const start = points[i];
-                const end = points[(i + 1) % points.length];
+            // Create floors and walls for each level
+            for (let f = 0; f < numFloors; f++) {
+                const yOffset = f * floorHeight * scale;
 
-                const wallHeight = roomHeight * scale;
-                const wallWidth = start.distanceTo(end) * scale;
+                // Create the floor
+                const shape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
+                const floorGeometry = new THREE.ExtrudeGeometry(shape, { depth: 0.1 * scale, bevelEnabled: false });
+                const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = Math.PI / 2; // Lay flat
+                floor.position.y = yOffset; // Move floor to correct height
+                scene.add(floor);
+                floorObjects.push(floor);
 
-                // Calculate the wall's center position
-                const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-                center.y = wallHeight / 2; // Elevate the wall to its center height
+                // Create outer walls between each pair of points
+                for (let i = 0; i < points.length; i++) {
+                    const start = points[i];
+                    const end = points[(i + 1) % points.length];
 
-                // Create wall geometry and rotate to align with the segment
-                const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
-                const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
-                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+                    const wallHeight = roomHeight * scale;
+                    const wallWidth = start.distanceTo(end) * scale;
 
-                // Position and rotate the wall to connect to the start of the next wall segment
-                wall.position.set(center.x * scale, center.y, center.z * scale);
+                    // Calculate the wall's center position
+                    const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+                    center.y = yOffset + wallHeight / 2; // Offset by floor height and wall height
 
-                // Calculate the angle to rotate the wall to align with the next segment
-                const direction = new THREE.Vector3().subVectors(end, start).normalize();
-                const angle = Math.atan2(direction.z, direction.x); // Get angle in the XZ plane
-                wall.rotation.y = -angle; // Rotate the wall to align with the segment
+                    // Create wall geometry and rotate to align with the segment
+                    const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
+                    const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
+                    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 
-                scene.add(wall);
-                wallObjects.push(wall);
+                    // Position and rotate the wall to connect to the start of the next wall segment
+                    wall.position.set(center.x * scale, center.y, center.z * scale);
+
+                    // Calculate the angle to rotate the wall to align with the next segment
+                    const direction = new THREE.Vector3().subVectors(end, start).normalize();
+                    const angle = Math.atan2(direction.z, direction.x); // Get angle in the XZ plane
+                    wall.rotation.y = -angle; // Rotate the wall to align with the segment
+
+                    scene.add(wall);
+                    wallObjects.push(wall);
+                }
+
+                // Create inner walls from line elements
+                lines.forEach(({ start, end }) => {
+                    const wallHeight = roomHeight * scale;
+                    const wallWidth = start.distanceTo(end) * scale;
+
+                    // Calculate the wall's center position
+                    const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+                    center.y = yOffset + wallHeight / 2; // Offset by floor height and wall height
+
+                    // Create wall geometry and rotate to align with the segment
+                    const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
+                    const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
+                    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+
+                    wall.position.set(center.x * scale, center.y, center.z * scale);
+                    
+                    // Calculate rotation to align with the line
+                    const direction = new THREE.Vector3().subVectors(end, start).normalize();
+                    const angle = Math.atan2(direction.z, direction.x);
+                    wall.rotation.y = -angle;
+
+                    scene.add(wall);
+                    wallObjects.push(wall);
+                });
             }
 
-            // Create inner walls from line elements
-            lines.forEach(({ start, end }) => {
-                const wallHeight = roomHeight * scale;
-                const wallWidth = start.distanceTo(end) * scale;
+            // Create the roof (which is basically a floor without walls)
+            const roofGeometry = new THREE.ExtrudeGeometry(new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale))), { depth: 0.1 * scale, bevelEnabled: false });
+            const roofMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.rotation.x = Math.PI / 2; // Lay flat
+            roof.position.y = numFloors * floorHeight * scale; // Move roof to top of building
+            scene.add(roof);
 
-                // Calculate the wall's center position
-                const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-                center.y = wallHeight / 2; // Elevate the wall to its center height
-
-                // Create wall geometry and rotate to align with the segment
-                const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
-                const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
-                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-
-                wall.position.set(center.x * scale, center.y, center.z * scale);
-                
-                // Calculate rotation to align with the line
-                const direction = new THREE.Vector3().subVectors(end, start).normalize();
-                const angle = Math.atan2(direction.z, direction.x);
-                wall.rotation.y = -angle;
-
-                scene.add(wall);
-                wallObjects.push(wall);
-            });
+            // Add people in the building
+            addPeople();
         }
-
 
         // Function to parse the "transform" attribute for translation
         function parseTransform(transform) {
@@ -296,52 +316,6 @@
             return box;
         }
 
-        // Function to build the building with floors and walls
-        function buildBuilding() {
-            // Clear previous building elements
-            clearBuilding();
-
-            // Get user input for floors and elevators
-            numFloors = parseInt(document.getElementById("floorCount").value);
-            maxElevators = parseInt(document.getElementById("elevatorCount").value);
-            maxPeople = parseInt(document.getElementById("peopleCount").value);
-
-            // Create floors and walls for each level
-            for (let i = 0; i < numFloors; i++) {
-                const yOffset = i * floorHeight;
-
-                // Floors
-                createBox(3, 0.1, 3, 0xcccccc, { x: -1.5, y: yOffset, z: 3.5 });
-                createBox(3, 0.1, 3, 0xcccccc, { x: -1.5, y: yOffset, z: 0 });
-                createBox(3, 0.1, 3, 0xcccccc, { x: 1.5, y: yOffset, z: 0 });
-                createBox(3, 0.1, 2.3, 0xcccccc, { x: 1.5, y: yOffset, z: -2.65 });
-                createBox(3, 0.1, 2, 0xcccccc, { x: -1.5, y: yOffset, z: -2.5 });
-                createBox(1.5, 0.1, 2, 0xcccccc, { x: -3.25, y: yOffset, z: 0 });
-
-                // Walls
-                createBox(3, roomHeight, wallThickness, wallColor, { x: -1.5, y: yOffset + roomHeight / 2, z: 5 }, true, wallOpacity);
-                createBox(3, roomHeight, wallThickness, wallColor, { x: -1.5, y: yOffset + roomHeight / 2, z: 2 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 3, wallColor, { x: -3, y: yOffset + roomHeight / 2, z: 3.5 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 3, wallColor, { x: 0, y: yOffset + roomHeight / 2, z: 3.5 }, true, wallOpacity);
-
-                createBox(3, roomHeight, wallThickness, wallColor, { x: -1.5, y: yOffset + roomHeight / 2, z: 1.5 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 3, wallColor, { x: -3, y: yOffset + roomHeight / 2, z: 0 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 3, wallColor, { x: 0, y: yOffset + roomHeight / 2, z: 0 }, true, wallOpacity);
-
-                createBox(3, roomHeight, wallThickness, wallColor, { x: 1.5, y: yOffset + roomHeight / 2, z: 1.5 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 3, wallColor, { x: 3, y: yOffset + roomHeight / 2, z: 0 }, true, wallOpacity);
-
-                createBox(3, roomHeight, wallThickness, wallColor, { x: 1.5, y: yOffset + roomHeight / 2, z: -4 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 2.3, wallColor, { x: 0, y: yOffset + roomHeight / 2, z: -2.65 }, true, wallOpacity);
-
-                createBox(3, roomHeight, wallThickness, wallColor, { x: -1.5, y: yOffset + roomHeight / 2, z: -4 }, true, wallOpacity);
-                createBox(1.5, roomHeight, wallThickness, wallColor, { x: -3.25, y: yOffset + roomHeight / 2, z: -1 }, true, wallOpacity);
-                createBox(wallThickness, roomHeight, 2, wallColor, { x: -4, y: yOffset + roomHeight / 2, z: 0 }, true, wallOpacity);
-            }
-
-            addPeople();
-        }
-
         // Clear existing building elements
         function clearBuilding() {
             floorObjects.forEach(floor => scene.remove(floor));
@@ -356,7 +330,7 @@
                 console.log("Maximum number of elevators reached.");
                 return;
             }
-            const elevatorHeight = numFloors * floorHeight; // Ensure elevator matches building height
+            const elevatorHeight = numFloors * floorHeight * scale; // Ensure elevator matches building height
             const geometry = new THREE.BoxGeometry(elevatorWidth, elevatorHeight, elevatorDepth);
             const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
             const elevatorBox = new THREE.Mesh(geometry, material);
