@@ -28,7 +28,7 @@ To start the webservice, do:
 
 ```
 cd python
-python -mvenv env
+python -m venv env
 . env/bin/activate
 pip install -r requirements-mini.txt
 flask run
