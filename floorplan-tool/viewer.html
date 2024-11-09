@@ -69,6 +69,10 @@
         <button onclick="resetSimulation()">Reset</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
     </div>
+    <div id="timer" style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
+        <p>Time for <span id="completionPercentage">80</span>% completed trips<br/><span id="timerValue">0</span> seconds</p>
+        <p>People Reached Destination:<br/><span id="peopleCompleted">0</span> / <span id="completionThreshold">0</span> (80% of total)</p>
+    </div>
 
     <!-- Popup for elevator actions -->
     <div id="popup" onclick="event.stopPropagation();">
@@ -131,6 +135,14 @@
         let isAddingElevator = true;
         let isSettingSpawnPoint = false;
         let peopleSpawnPoint = null;
+
+        let timerInterval = null;
+        let startTime = 0;
+        let peopleCompleted = 0;
+        let completionThreshold = 0;
+        let totalPeople = 0;
+        let targetPercentage = 80; // Target percentage for completion
+
 
         function enableElevatorAdding() {
             setTimeout(() => {
@@ -795,6 +807,26 @@
             }
             addPeople();
             isSimulationRunning = true;
+
+            // Reset the timer
+            startTime = Date.now();
+            document.getElementById('timerValue').innerText = '0';
+
+            // Start the timer interval
+            timerInterval = setInterval(function() {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timerValue').innerText = elapsedTime;
+            }, 1000);
+
+            peopleCompleted = 0; // Reset the completion counter
+            totalPeople = people.length;
+            document.getElementById('completionThreshold').innerText = completionThreshold;
+            document.getElementById('completionPercentage').innerText = targetPercentage;
+            completionThreshold = Math.floor((targetPercentage / 100) * totalPeople); // Calculate threshold
+
+            // Update the live count display at start
+            document.getElementById('completionThreshold').innerText = completionThreshold;
+
             movingPeople = people.map(person => {
                 const currentFloor = Math.floor(person.position.y / (floorHeight));
                 let targetFloor = chooseRandomTargetFloor(currentFloor);
@@ -805,10 +837,12 @@
                     destinationFloor: targetFloor,
                     path: null,
                     pathIndex: 0,
-                    speed: personBaseSpeed + Math.random() * 0.05,
+                    speed: 0.02 + Math.random() * 0.05,
                     inElevator: false,
                     goingToElevator: currentFloor !== targetFloor,
-                    elevator: chooseRandomElevator(person.position)
+                    elevator: chooseRandomElevator(person.position),
+                    destinationPosition: null, // Initialize destination position
+                    isDone: false // New property to track completion
                 };
             });
             animatePeople();
@@ -831,8 +865,29 @@
             return closestElevator;
         }
 
+        function checkSimulationCompletion() {
+            // Update the live count display
+            document.getElementById('peopleCompleted').innerText = peopleCompleted;
+
+            if (peopleCompleted >= completionThreshold) {
+                // Stop the timer
+                clearInterval(timerInterval);
+                console.log(`${peopleCompleted} out of ${totalPeople} people have reached their destinations.`);
+                console.log(`${targetPercentage}% of people have reached their destinations.`);
+                // Display completion message
+                const timerDiv = document.getElementById('timer');
+                timerDiv.innerHTML += `<p>${targetPercentage}% of people have reached their destinations!</p>`;
+                isSimulationRunning = false; // Stop the simulation loop
+            }
+        }
+
+
+
+
         function animatePeople() {
             movingPeople.forEach(person => {
+                if (person.isDone) return; // Skip if person is done
+
                 const { mesh, floor, destinationFloor, speed, goingToElevator, elevator } = person;
 
                 if (floor === destinationFloor && !person.inElevator) {
@@ -840,10 +895,24 @@
                     if (!person.path) {
                         const startPos = mesh.position.clone();
                         person.destinationPosition = getRandomDestinationWithinFloor(destinationFloor);
+                        if (!person.destinationPosition) {
+                            console.error("No valid destination position found for person on floor", floor);
+                            if (!person.isDone) {
+                                person.isDone = true;
+                                peopleCompleted++;
+                                checkSimulationCompletion();
+                            }
+                            return;
+                        }
                         person.path = findPath(startPos, person.destinationPosition, floor);
                         person.pathIndex = 0;
                         if (!person.path) {
                             console.error("No path found for person on floor", floor);
+                            if (!person.isDone) {
+                                person.isDone = true;
+                                peopleCompleted++;
+                                checkSimulationCompletion();
+                            }
                             return;
                         }
                     }
@@ -855,8 +924,15 @@
                         if (mesh.position.distanceTo(targetPosition) < 0.05) {
                             person.pathIndex++;
                         }
+                    } else {
+                        // Reached destination; mark person as done
+                        if (!person.isDone) {
+                            person.isDone = true;
+                            peopleCompleted++;
+                            checkSimulationCompletion();
+                        }
                     }
-                } else if (goingToElevator) {
+                } else if (person.goingToElevator) {
                     // Moving to the elevator
                     if (!person.path) {
                         const elevatorPos = new THREE.Vector3(elevator.position.x, mesh.position.y, elevator.position.z);
