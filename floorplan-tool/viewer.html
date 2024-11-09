@@ -64,8 +64,9 @@
         <label>Number of Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
         <label>Number of People: <input type="number" id="peopleCount" value="50" min="1"></label><br>
     </form>
-        <button onclick="startSimulation()">Play Animation</button>
-        <button onclick="stopSimulation()">Stop Animation</button>
+        <button onclick="startSimulation()">Play</button>
+        <button onclick="stopSimulation()">Stop</button>
+        <button onclick="resetSimulation()">Reset</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
     </div>
 
@@ -192,7 +193,7 @@
         const roomHeight = 2.9;     // Height of walls
         const wallThickness = 0.1;
         const wallOpacity = 0.1;
-        const floorOpacity = 0.01;
+        const floorOpacity = 0.1;
         const elevatorOpacity = 1.0;
         const wallColor = 0x1ed273;
         const floorColor = 0x1ed273;
@@ -805,13 +806,15 @@
                     speed: personBaseSpeed + Math.random() * 0.05,
                     inElevator: false,
                     goingToElevator: currentFloor !== targetFloor,
-                    elevator: findClosestElevator(person.position)
+                    elevator: chooseRandomElevator(person.position)
                 };
             });
             animatePeople();
         }
 
-
+        function chooseRandomElevator() {
+            return elevators[Math.floor(Math.random() * elevators.length)];
+        }
 
         function findClosestElevator(personPosition) {
             let closestElevator = elevators[0];
@@ -950,7 +953,16 @@
         }
 
 
-        function stopSimulation() { isSimulationRunning = false; }
+        function stopSimulation() { 
+            // I want to reinitialize the simulation
+            isSimulationRunning = false;   
+         }
+
+        function resetSimulation() {
+            stopSimulation();
+            people.forEach(person => scene.remove(person));
+        }
+
 
         getSVGDataFromURL();
         
