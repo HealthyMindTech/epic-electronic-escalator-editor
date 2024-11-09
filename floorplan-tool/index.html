@@ -126,7 +126,13 @@
     <dialog id="my_modal_1" class="modal">
       <div class="modal-box">
         <h3 class="text-lg font-bold">Import floorplan</h3>
-        <p class="py-4">Press ESC key or click the button below to close</p>
+        <p class="pb-4">
+            <ul class="steps steps-vertical">
+                <li class="step step-primary">Upload a floorplan image using the file browser below</li>
+                <li class="step">Try "AI Detection" to detect the walls</li>
+                <li class="step text-left">You can also click "Manual tracing" to draw the walls yourself</li>
+              </ul>
+        </p>
         <div class="modal-action">
           <input
             type="file"
@@ -136,10 +142,10 @@
             class="file-input file-input-bordered file-input-primary w-full max-w-xs"
           />
           <button id="load-lines-button" class="btn btn-warning" onclick="loadLines()">
-            Load Lines
+            ✨AI Detection
           </button>
           <button id="show-image-button" class="btn btn-warning" onclick="showImageAsTemplate()">
-            Show Image
+            Manual Tracing
           </button>
 
           <form method="dialog">
