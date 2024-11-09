@@ -155,31 +155,6 @@
         </div>
     </div> -->
 
-    <script>
-        // Add keyboard controls
-        document.addEventListener('keydown', function(event) {
-            switch(event.key.toLowerCase()) {
-                case 'w':
-                    panCamera('up');
-                    break;
-                case 's':
-                    panCamera('down');
-                    break;
-                case 'a':
-                    panCamera('left');
-                    break;
-                case 'd':
-                    panCamera('right');
-                    break;
-                case 'q':
-                    rotateCamera('left');
-                    break;
-                case 'e':
-                    rotateCamera('right');
-                    break;
-            }
-        });
-        </script>
 
     <!-- Include Three.js and OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -248,9 +223,77 @@
         controls.dampingFactor = 0.1;
         controls.maxPolarAngle = Math.PI / 2;
 
+        // Define flags for toggling and movement states
+        let isShiftPressed = false;
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let moveUp = false;
+        let moveDown = false;
+        let rotateLeft = false;
+        let rotateRight = false;
+
+        // Track if Shift is pressed
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Shift') isShiftPressed = true;
+        });
+        document.addEventListener('keyup', (event) => {
+            if (event.key === 'Shift') isShiftPressed = false;
+        });
+
+        // Function to toggle movement
+        function toggleMovement(flag) {
+            return !flag;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (isShiftPressed) {
+                // Toggle mode when Shift is held
+                switch (event.code) {
+                    case 'KeyW': moveForward = toggleMovement(moveForward); break;
+                    case 'KeyS': moveBackward = toggleMovement(moveBackward); break;
+                    case 'KeyA': moveLeft = toggleMovement(moveLeft); break;
+                    case 'KeyD': moveRight = toggleMovement(moveRight); break;
+                    case 'KeyR': moveUp = toggleMovement(moveUp); break;
+                    case 'KeyF': moveDown = toggleMovement(moveDown); break;
+                    case 'KeyQ': rotateLeft = toggleMovement(rotateLeft); break;
+                    case 'KeyE': rotateRight = toggleMovement(rotateRight); break;
+                }
+            } else {
+                // Regular press-and-hold mode
+                switch (event.code) {
+                    case 'KeyW': moveForward = true; break;
+                    case 'KeyS': moveBackward = true; break;
+                    case 'KeyA': moveLeft = true; break;
+                    case 'KeyD': moveRight = true; break;
+                    case 'KeyR': moveUp = true; break;
+                    case 'KeyF': moveDown = true; break;
+                    case 'KeyQ': rotateLeft = true; break;
+                    case 'KeyE': rotateRight = true; break;
+                }
+            }
+        });
+
+    // Stop movement on key release if Shift is not held
+    document.addEventListener('keyup', (event) => {
+        if (!isShiftPressed) {
+            switch (event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+                case 'KeyR': moveUp = false; break;
+                case 'KeyF': moveDown = false; break;
+                case 'KeyQ': rotateLeft = false; break;
+                case 'KeyE': rotateRight = false; break;
+            }
+        }
+    });
+
         // Pan and Rotate Functions
         function rotateCamera(direction) {
-            const angle = 0.1; // rotation angle in radians
+            const angle = 0.02; // rotation angle in radians
             if (direction === 'left') {
                 camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
             } else if (direction === 'right') {
@@ -1233,6 +1276,16 @@
         // Rendering loop
         function animate() {
             requestAnimationFrame(animate);
+
+            if (moveForward) camera.position.z -= 1;
+            if (moveBackward) camera.position.z += 1;
+            if (moveLeft) camera.position.x -= 1;
+            if (moveRight) camera.position.x += 1;
+            if (moveUp) camera.position.y += 1;
+            if (moveDown) camera.position.y -= 1;
+            if (rotateLeft) rotateCamera('left');
+            if (rotateRight) rotateCamera('right');
+
             controls.update();
             renderer.render(scene, camera);
         }
