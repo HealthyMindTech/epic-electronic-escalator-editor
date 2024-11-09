@@ -495,13 +495,6 @@
                 });
             }
 
-            // Create the roof (which is basically a floor without walls)
-            const roofGeometry = new THREE.ExtrudeGeometry(new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale))), { depth: 0.1 * scale, bevelEnabled: false });
-            const roofMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
-            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
-            roof.rotation.x = Math.PI / 2; // Lay flat
-            roof.position.y = numFloors * floorHeight; // Move roof to top of building
-            scene.add(roof);
 
             // Add people in the building
             // addPeople();
