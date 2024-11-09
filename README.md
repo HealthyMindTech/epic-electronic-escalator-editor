@@ -28,7 +28,6 @@ To start the webservice, do:
 
 ```
 cd python
-```
 python -mvenv env
 . env/bin/activate
 pip install -r requirements-mini.txt
