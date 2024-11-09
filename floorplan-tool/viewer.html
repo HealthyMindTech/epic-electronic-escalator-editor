@@ -718,6 +718,15 @@
                 return;
             }
 
+            // Existing code for elevator interaction
+            // Check for intersections with elevators first
+            const elevatorIntersects = raycaster.intersectObjects(elevators);
+            if (elevatorIntersects.length > 0) {
+                selectedElevator = elevatorIntersects[0].object;
+                showPopup(event.clientX, event.clientY);
+                return;
+            }
+
             // Handle adding elevator
             if (isAddingElevator) {
                 const floorIntersects = raycaster.intersectObjects(floorObjects);
@@ -732,14 +741,7 @@
                 return;
             }
 
-            // Existing code for elevator interaction
-            // Check for intersections with elevators first
-            const elevatorIntersects = raycaster.intersectObjects(elevators);
-            if (elevatorIntersects.length > 0) {
-                selectedElevator = elevatorIntersects[0].object;
-                showPopup(event.clientX, event.clientY);
-                return;
-            }
+
 
             // Hide popup if clicking anywhere else
             hidePopup();
@@ -960,6 +962,7 @@
 
         function resetSimulation() {
             stopSimulation();
+            
             people.forEach(person => scene.remove(person));
         }
 
