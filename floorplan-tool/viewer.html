@@ -125,7 +125,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/SVGLoader.js"></script>
     <script>
-        let numFloors = 4, maxElevators = 2, maxPeople = 5;
+        let numFloors = 4, maxElevators = 2, maxPeople = 150;
         let elevators = [], people = [], movingPeople = [], selectedElevator = null;
         let floorObjects = [], wallObjects = [], isSimulationRunning = false;
         let isMovingElevator = false;
@@ -194,9 +194,10 @@
         const floorHeight = 3;      // Height of each floor
         const roomHeight = 2.9;     // Height of walls
         const wallThickness = 0.1;
-        const wallOpacity = 0.2;
-        const floorOpacity = 0.2;
-        const wallColor = 0x888888;
+        const wallOpacity = 0.1;
+        const floorOpacity = 0.1;
+        const wallColor = 0x1ed273;
+        const floorColor = 0x1ed273;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
         const scale = 0.1; // Adjust this scale as needed
@@ -432,7 +433,7 @@
                 // Create the floor
                 const shape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
                 const floorGeometry = new THREE.ExtrudeGeometry(shape, { depth: 0.1 * scale, bevelEnabled: false });
-                const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
+                const floorMaterial = new THREE.MeshBasicMaterial({ color: floorColor, opacity: floorOpacity, side: THREE.DoubleSide, transparent: true });
                 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
                 floor.rotation.x = Math.PI / 2; // Lay flat
                 floor.position.y = yOffset; // Move floor to correct height
