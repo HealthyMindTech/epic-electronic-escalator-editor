@@ -1,5 +1,64 @@
-// Initialize Fabric.js canvas
+// Initialize Fabric.js canvas and set up responsive resizing
 const canvas = new fabric.Canvas('floorPlanCanvas');
+let aspectRatio = 4 / 3; // Define the desired aspect ratio (e.g., 4:3)
+
+// Placeholder for the building object to center
+let buildingFootprint = null;
+
+// Function to resize the canvas based on container width
+function resizeCanvas() {
+    console.log('Resizing canvas...');
+    // Get the width of the container
+    const containerWidth = document.getElementById('canvasContainer').clientWidth;
+
+    // Calculate new height based on aspect ratio
+    const newHeight = containerWidth / aspectRatio;
+    console.log(`New width: ${containerWidth}, New height: ${newHeight}`);
+    // Set canvas dimensions
+    canvas.setDimensions({
+        width: containerWidth,
+        height: newHeight
+    });
+    if (buildingFootprint) {
+        centerBuildingOnCanvas();
+    }
+
+    // Optionally, scale the content to fit the new dimensions
+    canvas.getObjects().forEach(obj => {
+        obj.scaleToWidth(containerWidth); // Scale each object proportionally
+        obj.setCoords(); // Update object coordinates
+    });
+    canvas.renderAll(); // Re-render the canvas
+}
+
+function centerBuildingOnCanvas() {
+    if (!buildingFootprint) return;
+
+    // Get canvas dimensions
+    const canvasWidth = canvas.getWidth();
+    const canvasHeight = canvas.getHeight();
+
+    // Center the building footprint on the canvas
+    buildingFootprint.set({
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center'
+    });
+    buildingFootprint.setCoords(); // Update coordinates
+
+    canvas.renderAll(); // Re-render the canvas
+}
+
+// Initial resize on load
+resizeCanvas();
+
+// Resize canvas on window resize event
+window.addEventListener('resize', resizeCanvas);
+
+
+
+// Initialize Fabric.js canvas
 let numberOfFloors = null;
 let drawingMode = null;
 let startX, startY;
@@ -116,35 +175,6 @@ function openViewer() {
     window.open(viewerURL, '_blank');
 }
 
-// Draw footprint on the canvas
-function drawFootprintOnCanvas(coordinates) {
-    const canvasWidth = 800; // Set based on your actual canvas dimensions
-    const canvasHeight = 600;
-
-    // Convert lat/lng coordinates to a local coordinate system
-    const [minLat, minLng] = [Math.min(...coordinates.map(c => c[0])), Math.min(...coordinates.map(c => c[1]))];
-    const scalingFactor = 10000; // Adjust this scaling factor as needed
-
-    const scaledCoords = coordinates.map(([lat, lng]) => [
-        (lng - minLng) * scalingFactor,
-        (minLat - lat) * scalingFactor
-    ]);
-
-    // Create the footprint polygon on the canvas
-    const footprint = new fabric.Polygon(scaledCoords, {
-        left: canvasWidth / 2,
-        top: canvasHeight / 2,
-        fill: 'rgba(0,0,0,0)',
-        stroke: 'black',
-        strokeWidth: 2,
-        selectable: false,
-    });
-
-    // Clear any previous drawings and add the footprint
-    canvas.clear();
-    canvas.add(footprint);
-    canvas.add(modeDisplay);
-}
 // Parameters
 const snapThreshold = 30; // Pixels within which snapping will occur
 let snappingPoint = null; // Point where snapping happens
@@ -435,8 +465,8 @@ function extractCoordinates(data) {
 }
 
 function drawFootprintOnCanvas(buildingInfo, coordinates) {
-    const canvasWidth = 800;
-    const canvasHeight = 600;
+    const canvasWidth = canvas.getWidth();
+    const canvasHeight = canvas.getHeight();
 
     // Estimate UTM zone based on the first coordinate
     const [lat, lng] = coordinates[0];

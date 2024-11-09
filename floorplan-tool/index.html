@@ -1,57 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interactive Building Map</title>
 
     <!-- Leaflet and OSM Buildings CSS -->
-    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
-    <link href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" rel="stylesheet">
+    <link
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"
+      rel="stylesheet"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" integrity="sha512-CeIsOAsgJnmevfCi2C7Zsyy6bQKi43utIjdA87Q0ZY84oDqnI0uwfM9+bKiIkI75lUeI00WG/+uJzOmuHlesMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"
+      integrity="sha512-CeIsOAsgJnmevfCi2C7Zsyy6bQKi43utIjdA87Q0ZY84oDqnI0uwfM9+bKiIkI75lUeI00WG/+uJzOmuHlesMA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <!-- Updated Styles -->
     <style>
+      /* Set main container to use full available width */
+      #mainContainer {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        width: 100%; /* Takes full width */
+      }
+
+      /* Responsive map and tool widths */
+      #map {
+        height: 600px; /* Adjust height as needed */
+        width: 50%; /* Takes up half the screen on desktop */
+      }
+
+      #toolContainer {
+        width: 50%; /* Takes up the other half */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+      }
+
+      /* Responsive canvas container */
+      #canvasContainer {
+        display: flex;
+        justify-content: center;
+        width: 100%; /* Use full width of tool container */
+        margin-top: 20px;
+      }
+
+      /* Responsive canvas element */
+      #floorPlanCanvas {
+        border: 1px solid #ccc;
+        width: 100%; /* Responsive to container */
+        height: auto; /* Height will be controlled by JavaScript */
+      }
+
+      /* Responsive for smaller screens */
+      @media (max-width: 800px) {
+        #mainContainer {
+          flex-direction: column;
+        }
+        #map,
+        #toolContainer {
+          width: 100%;
+        }
         #map {
-            height: 400px;
-            width: 100%;
-            margin-bottom: 20px;
+          height: 400px; /* Adjust for smaller screens */
         }
-        #canvasContainer {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
+      }
+
+      /* Controls styles */
+      #controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      #controls button,
+      #controls input[type="file"] {
+        margin: 5px;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 800px) {
+        #mainContainer {
+          flex-direction: column;
         }
-        #floorPlanCanvas {
-            border: 1px solid #ccc;
+        #map,
+        #toolContainer {
+          width: 100%;
         }
-        #controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
+        #map {
+          height: 400px; /* Adjust for smaller screens */
         }
-        button {
-            margin: 0 10px;
-        }
+      }
+      /* Remove fixed width and height from the canvas element itself */
+      #floorPlanCanvas {
+        border: 1px solid #ccc;
+        width: 100%; /* Use 100% width, height will be set dynamically */
+        height: auto; /* Height will be controlled by JavaScript */
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Find and Draw Building Floorplans</h1>
-    <div id="map" style="cursor: pointer"></div>
 
-    <div id="canvasContainer">
-        <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
-    </div>
+    <!-- Main container that holds both the map and the tool -->
+    <div id="mainContainer">
+      <!-- Map Section -->
+      <div id="map" style="cursor: pointer"></div>
 
-    <div id="controls">
-        <button onclick="enableDrawLine()">Draw Wall</button>
-        <!-- Add this input element to your HTML where appropriate -->
-        <input type="file" id="imageLoader" name="imageLoader" accept="image/*" />
-        <button id="lockImageButton">Lock Image</button>
-        <!-- <button onclick="enableDrawRect()">Draw Door/Feature</button> -->
-        <button onclick="clearCanvas()">Clear</button>
-        <button onclick="saveSVG()">Save as SVG</button>
-        <button onclick="openViewer()">Open Viewer</button>
+      <!-- Tool Section -->
+      <div id="toolContainer">
+        <div id="canvasContainer">
+          <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <div id="controls">
+          <button onclick="enableDrawLine()">Draw Wall</button>
+          <input
+            type="file"
+            id="imageLoader"
+            name="imageLoader"
+            accept="image/*"
+          />
+          <button id="lockImageButton">Lock Image</button>
+          <button onclick="clearCanvas()">Clear</button>
+          <button onclick="saveSVG()">Save as SVG</button>
+          <button onclick="openViewer()">Open Viewer</button>
+        </div>
+      </div>
     </div>
 
     <!-- Leaflet and OSM Buildings JavaScript -->
@@ -69,31 +154,34 @@
             maxNativeZoom: 18
         }).addTo(map);
 
-        // Add OSM Buildings for 3D buildings
-        const osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+      // Add OSM Buildings for 3D buildings
+      const osmb = new OSMBuildings(map).load(
+        "https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json"
+      );
 
         // Locate and center on user's location
         // map.locate({ setView: true, maxZoom: 18 });
 
-        // Add event listener to handle location found
-        map.on('locationfound', (e) => {
-            const radius = e.accuracy / 2;
-            L.marker(e.latlng).addTo(map)
-                .bindPopup("You are within " + radius + " meters from this point").openPopup();
-            L.circle(e.latlng, radius).addTo(map);
-        });
+      // Add event listener to handle location found
+      map.on("locationfound", (e) => {
+        const radius = e.accuracy / 2;
+        L.marker(e.latlng)
+          .addTo(map)
+          .bindPopup("You are within " + radius + " meters from this point")
+          .openPopup();
+        L.circle(e.latlng, radius).addTo(map);
+      });
 
-        // Handle location error
-        map.on('locationerror', (e) => {
-            //alert("Location access denied. Please enable location services.");
-        });
+      // Handle location error
+      map.on("locationerror", (e) => {
+        //alert("Location access denied. Please enable location services.");
+      });
 
-        // Map click event to fetch and display building footprint (from the previous steps)
-        map.on('click', function(e) {
-            const { lat, lng } = e.latlng;
-            fetchBuildingFootprint(lat, lng);
-        });
-
+      // Map click event to fetch and display building footprint (from the previous steps)
+      map.on("click", function (e) {
+        const { lat, lng } = e.latlng;
+        fetchBuildingFootprint(lat, lng);
+      });
     </script>
-</body>
+  </body>
 </html>
