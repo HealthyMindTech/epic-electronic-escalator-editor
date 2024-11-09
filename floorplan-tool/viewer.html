@@ -70,8 +70,8 @@
         <button onclick="removeAllElevators()">Remove All Elevators</button>
     </div>
     <div id="timer" style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
-        <p>Time for <span id="completionPercentage">80</span>% completed trips<br/><span id="timerValue">0</span> seconds</p>
-        <p>People Reached Destination:<br/><span id="peopleCompleted">0</span> / <span id="completionThreshold">0</span> (80% of total)</p>
+        <p>Time to complete all trips:<br/><span id="timerValue">0</span> seconds</p>
+        <p>People Reached Destination:<br/><span id="peopleCompleted">0</span> / <span id="totalPeople">0</span></p>
     </div>
 
     <!-- Popup for elevator actions -->
@@ -139,9 +139,7 @@
         let timerInterval = null;
         let startTime = 0;
         let peopleCompleted = 0;
-        let completionThreshold = 0;
         let totalPeople = 0;
-        let targetPercentage = 80; // Target percentage for completion
 
 
         function enableElevatorAdding() {
@@ -819,12 +817,9 @@
 
             peopleCompleted = 0; // Reset the completion counter
             totalPeople = people.length;
-            document.getElementById('completionThreshold').innerText = completionThreshold;
-            document.getElementById('completionPercentage').innerText = targetPercentage;
-            completionThreshold = Math.floor((targetPercentage / 100) * totalPeople); // Calculate threshold
 
             // Update the live count display at start
-            document.getElementById('completionThreshold').innerText = completionThreshold;
+            document.getElementById('totalPeople').innerText = totalPeople;
 
             movingPeople = people.map(person => {
                 const currentFloor = Math.floor(person.position.y / (floorHeight));
@@ -868,7 +863,7 @@
             // Update the live count display
             document.getElementById('peopleCompleted').innerText = peopleCompleted;
 
-            if (peopleCompleted >= completionThreshold) {
+            if (peopleCompleted >= totalPeople) {
                 // Stop the timer
                 clearInterval(timerInterval);
                 console.log(`${peopleCompleted} out of ${totalPeople} people have reached their destinations.`);
@@ -876,7 +871,8 @@
                 // Display completion message
                 const timerDiv = document.getElementById('timer');
                 timerDiv.innerHTML += `<p>${targetPercentage}% of people have reached their destinations!</p>`;
-                isSimulationRunning = false; // Stop the simulation loop
+                clearInterval(timerInterval);
+                isSimulationRunning = false;
             }
         }
 
