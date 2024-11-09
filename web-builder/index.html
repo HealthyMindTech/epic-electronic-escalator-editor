@@ -59,6 +59,7 @@
 <body>
     <!-- User Interface -->
     <div id="interface">
+    <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)">
     <form onsubmit="buildBuilding(); return false;">
         <label>Number of Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
         <label>Number of Elevators: <input type="number" id="elevatorCount" value="2" min="1"></label><br>
@@ -95,6 +96,7 @@
     <!-- Include Three.js and OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/SVGLoader.js"></script>
     <script>
         let numFloors = 4, maxElevators = 2, maxPeople = 5;
         let elevators = [], people = [], movingPeople = [], selectedElevator = null;
@@ -147,6 +149,53 @@
         const wallColor = 0x888888;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
+
+        // Load SVG
+        function loadSVG(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const svgData = e.target.result;
+                const loader = new THREE.SVGLoader();
+                const paths = loader.parse(svgData).paths;
+                buildBuildingFromSVGPaths(paths);
+            };
+            reader.readAsText(file);
+        }
+
+        function buildBuildingFromSVGPaths(paths) {
+            clearBuilding();
+
+            numFloors = parseInt(document.getElementById("floorCount").value);
+
+            paths.forEach((path) => {
+                path.toShapes(true).forEach((shape) => {
+                    const geometry = new THREE.ShapeGeometry(shape);
+                    const boundingBox = new THREE.Box3().setFromObject(new THREE.Mesh(geometry));
+
+                    // Determine if the shape is an outer floor polygon or inner walls
+                    const isOuterFloor = checkIfOuterFloor(shape); // Implement logic as needed
+
+                    if (isOuterFloor) {
+                        // Floor: extrude the shape to a minimal height
+                        createBox(boundingBox.max.x - boundingBox.min.x, 0.1, boundingBox.max.y - boundingBox.min.y, 
+                            0xcccccc, { x: boundingBox.getCenter().x, y: 0, z: boundingBox.getCenter().y });
+                    } else {
+                        // Wall: extrude the shape to wall height
+                        createBox(boundingBox.max.x - boundingBox.min.x, roomHeight, wallThickness, 
+                            wallColor, { x: boundingBox.getCenter().x, y: roomHeight / 2, z: boundingBox.getCenter().y }, 
+                            true, wallOpacity);
+                    }
+                });
+            });
+
+            addPeople();
+        }
+        // Helper to determine if a shape is an outer floor polygon
+        function checkIfOuterFloor(shape) {
+            // Implement logic here to identify outer floor polygon based on SVG data or shape properties
+            return shape.holes.length === 0; // Example: no holes means outer floor
+        }
 
         // Function to create a box (floor or wall)
         function createBox(width, height, depth, color, position, isWall = false, opacity = 1) {
