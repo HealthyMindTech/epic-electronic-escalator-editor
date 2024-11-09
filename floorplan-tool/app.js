@@ -1,5 +1,6 @@
 // Initialize Fabric.js canvas
 const canvas = new fabric.Canvas('floorPlanCanvas');
+let numberOfFloors = null;
 let drawingMode = null;
 let startX, startY;
 
@@ -36,7 +37,13 @@ function saveSVG() {
 // Open a new tab with the Viewer using the SVG data from the canvas
 function openViewer() {
     const svgData = canvas.toSVG();
-    const viewerURL = `viewer.html?svg=${encodeURIComponent(svgData)}`;
+    const args = [];
+    if (numberOfFloors) {
+        args.push(`numberOfFloors=${numberOfFloors}`);
+    }
+    args.push(`svg=${encodeURIComponent(svgData)}`);
+
+    const viewerURL = `viewer.html?${args.join('&')}`;
     window.open(viewerURL, '_blank');
 }
 
@@ -403,8 +410,10 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
     if (text.length) {
         text.push("\n")
     }
+
     if (buildingInfo.levels) {
         text.push(`Number of floors: ${buildingInfo.levels}`);
+        numberOfFloors = buildingInfo.levels;
     } else {
         text.push("Number of floors: unknown");
     }
@@ -417,13 +426,14 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
             fontSize: 20,
             fontFamily: 'Arial',
             fill: 'black',
-            selectable: true,
+            selectable: false,
         });
     }
 
     // Clear any previous drawings and add the footprint
     canvas.clear();
     canvas.add(footprint);
+
     if (infoText) {
         canvas.add(infoText);
     }

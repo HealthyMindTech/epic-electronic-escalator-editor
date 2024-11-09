@@ -85,7 +85,7 @@
         <h4>3D Controls</h4>
         <button onclick="rotateCamera('left')">⟲</button>
         <button onclick="rotateCamera('right')">⟳</button>
-        
+
         <div id="pan-controls">
             <button onclick="panCamera('up')">⬆</button>
             <div class="pan-row">
@@ -127,7 +127,14 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/SVGLoader.js"></script>
     <script>
-        let numFloors = 4, maxPeople = 150;
+      const urlParams = new URLSearchParams(window.location.search);
+
+      console.log(urlParams);
+      // Access a specific query parameter, e.g., 'lat' or 'lng'
+      let numFloors = urlParams["numberOfFloors"] || 4, maxPeople = 150;
+      window.addEventListener("load", function() {
+          document.getElementById('floorCount').value = numFloors;
+      });
         let elevators = [], people = [], movingPeople = [], selectedElevator = null;
         let floorObjects = [], wallObjects = [], isSimulationRunning = false;
         let isMovingElevator = false;
@@ -395,7 +402,7 @@
             const svgData = file;
             const parser = new DOMParser();
             const svgDoc = parser.parseFromString(svgData, "image/svg+xml");
-            
+
             // Parse the outer polygon for floor and outer walls with group transformation
             let points = [];
             svgDoc.querySelectorAll("g").forEach(group => {
@@ -428,7 +435,7 @@
 
             buildBuildingFromSVGData(points, lines);
             positionCameraToViewBuilding(points);
-        
+
         }
 
         function positionCameraToViewBuilding(points) {
@@ -520,7 +527,7 @@
                     const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 
                     wall.position.set(center.x * scale, center.y, center.z * scale);
-                    
+
                     // Calculate rotation to align with the line
                     const direction = new THREE.Vector3().subVectors(end, start).normalize();
                     const angle = Math.atan2(direction.z, direction.x);
@@ -1051,20 +1058,20 @@
         }
 
 
-        function stopSimulation() { 
+        function stopSimulation() {
             // I want to reinitialize the simulation
-            isSimulationRunning = false;   
+            isSimulationRunning = false;
          }
 
         function resetSimulation() {
             stopSimulation();
-            
+
             people.forEach(person => scene.remove(person));
         }
 
 
         getSVGDataFromURL();
-        
+
         // Event listener for mouse clicks
         window.addEventListener('click', onMouseClick, false);
 
