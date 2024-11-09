@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Building Map</title>
-    
+
     <!-- Leaflet and OSM Buildings CSS -->
     <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
     <link href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" rel="stylesheet">
@@ -82,7 +82,7 @@
 
         // Handle location error
         map.on('locationerror', (e) => {
-            alert("Location access denied. Please enable location services.");
+            //alert("Location access denied. Please enable location services.");
         });
 
         // Map click event to fetch and display building footprint (from the previous steps)

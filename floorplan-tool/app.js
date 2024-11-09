@@ -50,7 +50,7 @@ function drawFootprintOnCanvas(coordinates) {
     const scalingFactor = 10000; // Adjust this scaling factor as needed
 
     const scaledCoords = coordinates.map(([lat, lng]) => [
-        (lng - minLng) * scalingFactor, 
+        (lng - minLng) * scalingFactor,
         (minLat - lat) * scalingFactor
     ]);
 
@@ -133,7 +133,7 @@ function findClosestPointOnCanvas(x, y) {
 canvas.on('mouse:move', function (o) {
     const pointer = canvas.getPointer(o.e);
     const { x, y } = pointer;
-    
+
     // Find the closest point on any line or polygon, excluding the current line
     snappingPoint = findClosestPointOnCanvas(x, y);
 
@@ -185,12 +185,12 @@ canvas.on('mouse:up', function (o) {
         y2: y,
     });
     canvas.renderAll();
-    
+
     isDrawing = false; // Reset drawing state
     currentLine = null; // Reset current line
     hideSnapIndicator(); // Hide snapping indicator
 });
-// 
+//
 
 
 
@@ -228,7 +228,7 @@ function showSnapIndicator(x, y) {
         });
         canvas.add(canvas.snapIndicator);
     }
-    
+
     // Position the center of the circle at (x, y)
     canvas.snapIndicator.set({ left: x - radius, top: y - radius });
     canvas.snapIndicator.setCoords();
@@ -245,26 +245,80 @@ function hideSnapIndicator() {
 }
 
 
+// [out:json];
+// (
+//   // Query buildings with height information
+//   way["building"]["height"];
+//   relation["building"]["height"];
+
+//   // Query buildings with number of levels (approximate height)
+//   way["building"]["building:levels"];
+//   relation["building"]["building:levels"];
+// );
+// out body;
+// >;
+// out skel qt;
+
 function fetchBuildingFootprint(lat, lng) {
     const query = `
         [out:json];
-        way(around:50, ${lat}, ${lng})["building"];  // Increase radius here
+        way(around:20, ${lat}, ${lng})["building"];  // Increase radius here
         (._;>;);
         out body;
     `;
     fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-            const coordinates = extractCoordinates(data);
-            if (coordinates) {
-                console.log(coordinates);
-                drawFootprintOnCanvas(coordinates);
-            } else {
-                alert("No building found at this location.");
-            }
-        });
+                .then(response => response.json())
+                .then(data => {
+                        console.log(data);
+                        const coordinates = extractCoordinates(data);
+                        const buildingInfo = fetchBuildingInfo(data);
+                        if (coordinates) {
+                                drawFootprintOnCanvas(buildingInfo, coordinates);
+                        } else {
+                                alert("No building found at this location.");
+                        }
+                });
 }
 
+function fetchBuildingInfo(data) {
+    const way = data.elements.find(element => element.type === 'way');
+    if (way) {
+        let height = way.tags["height"] || way.tags["building:height"];
+        let levels = way.tags["building:levels"];
+
+        let addressParts = [];
+        if (way.tags["addr:housename"]) {
+            addressParts.push(way.tags["addr:housename"]);
+        }
+
+        if (way.tags["addr:street"]) {
+            if (addressParts.length) {
+                addressParts.push(", ");
+            }
+            addressParts.push(way.tags["addr:street"]);
+            if (way.tags["addr:housenumber"]) {
+                addressParts.push(" ");
+                addressParts.push(way.tags["addr:housenumber"]);
+            }
+        }
+
+        let address;
+        if (addressParts.length) {
+            address = addressParts.join("");
+        }
+
+
+        if (!height && levels) {
+            height = levels * 3; // Assume 3 meters per level
+        }
+        return {
+            address: address,
+            height: height,
+            levels: levels
+        };
+    }
+    return {};
+}
 
 function extractCoordinates(data) {
     const nodes = {};
@@ -276,7 +330,8 @@ function extractCoordinates(data) {
     const way = data.elements.find(element => element.type === 'way');
     return way ? way.nodes.map(nodeId => nodes[nodeId]) : null;
 }
-function drawFootprintOnCanvas(coordinates) {
+
+function drawFootprintOnCanvas(buildingInfo, coordinates) {
     const canvasWidth = 800;
     const canvasHeight = 600;
 
@@ -333,8 +388,44 @@ function drawFootprintOnCanvas(coordinates) {
         selectable: false,
     });
 
+    let text = [];
+
+    if (buildingInfo.address) {
+        text.push(buildingInfo.address);
+    }
+    if (buildingInfo.height) {
+        if (text.length) {
+            text.push("\n")
+        }
+        text.push(`Height: ${buildingInfo.height}m`);
+    }
+
+    if (text.length) {
+        text.push("\n")
+    }
+    if (buildingInfo.levels) {
+        text.push(`Number of floors: ${buildingInfo.levels}`);
+    } else {
+        text.push("Number of floors: unknown");
+    }
+
+    let infoText;
+    if (text.length) {
+        infoText = new fabric.Text(text.join(''), {
+            left: 10,
+            top: 10,
+            fontSize: 20,
+            fontFamily: 'Arial',
+            fill: 'black',
+            selectable: true,
+        });
+    }
+
     // Clear any previous drawings and add the footprint
     canvas.clear();
     canvas.add(footprint);
-}
+    if (infoText) {
+        canvas.add(infoText);
+    }
 
+}
