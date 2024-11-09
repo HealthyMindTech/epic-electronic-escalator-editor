@@ -127,7 +127,7 @@ function handleImage(e) {
         const data = new FormData();
         data.append('file', e.target.files[0]);
 
-        const url = "http://localhost:5000/upload"; //"https://python-wandering-dream-160.fly.dev/upload";
+        const url = "https://python-wandering-dream-160.fly.dev/upload";
 
         fetch(url, {
             method: 'POST',
