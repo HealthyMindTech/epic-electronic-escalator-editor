@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Building Map</title>
+    
+    <!-- Leaflet and OSM Buildings CSS -->
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
+    <link href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" integrity="sha512-CeIsOAsgJnmevfCi2C7Zsyy6bQKi43utIjdA87Q0ZY84oDqnI0uwfM9+bKiIkI75lUeI00WG/+uJzOmuHlesMA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        #canvasContainer {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        #floorPlanCanvas {
+            border: 1px solid #ccc;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        button {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Find and Draw Building Floorplans</h1>
+    <div id="map"></div>
+
+    <div id="canvasContainer">
+        <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <div id="controls">
+        <button onclick="enableDrawLine()">Draw Wall</button>
+        <button onclick="enableDrawRect()">Draw Door/Feature</button>
+        <button onclick="clearCanvas()">Clear</button>
+        <button onclick="saveSVG()">Save as SVG</button>
+    </div>
+
+    <!-- Leaflet and OSM Buildings JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([52.51836, 13.40438], 16);
+
+        // Add base layer
+        L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '© Data <a href="https://openstreetmap.org">OpenStreetMap</a>',
+            maxZoom: 20,
+            maxNativeZoom: 18
+        }).addTo(map);
+
+        // Add OSM Buildings for 3D buildings
+        const osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+
+        // Locate and center on user's location
+        map.locate({ setView: true, maxZoom: 18 });
+
+        // Add event listener to handle location found
+        map.on('locationfound', (e) => {
+            const radius = e.accuracy / 2;
+            L.marker(e.latlng).addTo(map)
+                .bindPopup("You are within " + radius + " meters from this point").openPopup();
+            L.circle(e.latlng, radius).addTo(map);
+        });
+
+        // Handle location error
+        map.on('locationerror', (e) => {
+            alert("Location access denied. Please enable location services.");
+        });
+
+        // Map click event to fetch and display building footprint (from the previous steps)
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            fetchBuildingFootprint(lat, lng);
+        });
+
+    </script>
+</body>
+</html>
