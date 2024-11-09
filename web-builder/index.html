@@ -341,6 +341,14 @@
             person.position.set(Math.random() * 5 - 2.5, yPos, Math.random() * 5 - 2.5);
         }
 
+        function chooseRandomTargetFloor(currentFloor) {
+            let targetFloor = Math.floor(Math.random() * numFloors);
+            while (targetFloor === currentFloor) {
+                targetFloor = Math.floor(Math.random() * numFloors);
+            }
+            return targetFloor;
+        }
+
         function startSimulation() {
             if (isSimulationRunning) return;
             if (elevators.length == 0) {
@@ -348,35 +356,58 @@
                 return;
             }
             isSimulationRunning = true;
-            movingPeople = people.map(person => ({
-                mesh: person,
-                floor: Math.floor(person.position.y / 3),
-                destinationFloor: Math.floor(Math.random() * numFloors),
-                speed: 0.02 + Math.random() * 0.05,
-                inElevator: false,
-            }));
+            movingPeople = people.map(person => {
+                const currentFloor = Math.floor(person.position.y / 3);
+                const targetFloor = chooseRandomTargetFloor(currentFloor);
+                return {
+                    mesh: person,
+                    floor: currentFloor,
+                    destinationFloor: targetFloor,
+                    destinationPosition: getRandomDestinationWithinFloor(targetFloor),
+                    speed: 0.02 + Math.random() * 0.05,
+                    inElevator: false,
+                    goingToElevator: true,  // New flag to indicate movement towards elevator on the same floor
+                    elevator: findClosestElevator(person.position)  // Find the closest elevator initially
+                };
+            });
             animatePeople();
+        }
+
+        function findClosestElevator(personPosition) {
+            let closestElevator = elevators[0];
+            let minDistance = personPosition.distanceTo(new THREE.Vector3(elevators[0].position.x, personPosition.y, elevators[0].position.z));
+            for (let i = 1; i < elevators.length; i++) {
+                const distance = personPosition.distanceTo(new THREE.Vector3(elevators[i].position.x, personPosition.y, elevators[i].position.z));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestElevator = elevators[i];
+                }
+            }
+            return closestElevator;
         }
 
         function animatePeople() {
             movingPeople.forEach(person => {
-                const { mesh, floor, destinationFloor, speed } = person;
-                
-                if (floor === destinationFloor) {
-                    const destination = getRandomDestinationWithinFloor(floor);
-                    movePerson(mesh, destination, speed);
-                } else if (!person.inElevator) {
-                    const elevator = elevators[Math.floor(Math.random() * elevators.length)];
-                    movePerson(mesh, elevator.position, speed);
-                    
-                    if (mesh.position.distanceTo(elevator.position) < 0.1) {
+                const { mesh, floor, destinationFloor, speed, goingToElevator, elevator } = person;
+
+                if (floor === destinationFloor && !goingToElevator) {
+                    // Move to the random position on the destination floor
+                    movePerson(mesh, person.destinationPosition, speed);
+                } else if (goingToElevator) {
+                    // Move to the elevator position on the same floor
+                    const elevatorTargetPosition = new THREE.Vector3(elevator.position.x, mesh.position.y, elevator.position.z);
+                    movePerson(mesh, elevatorTargetPosition, speed);
+
+                    if (mesh.position.distanceTo(elevatorTargetPosition) < 0.1) {
                         person.inElevator = true;
+                        person.goingToElevator = false;
                     }
                 } else if (person.inElevator) {
+                    // Move vertically to the destination floor in the elevator
                     const destination = new THREE.Vector3(mesh.position.x, destinationFloor * 3 + 0.2, mesh.position.z);
                     movePerson(mesh, destination, speed);
-                    
-                    if (mesh.position.y.toFixed(1) === destination.y.toFixed(1)) {
+
+                    if (Math.abs(mesh.position.y - destination.y) < 0.1) {
                         person.floor = destinationFloor;
                         person.inElevator = false;
                     }
