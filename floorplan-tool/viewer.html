@@ -131,13 +131,10 @@
 
       // Access a specific query parameter, e.g., 'lat' or 'lng'
       let numFloors = urlParams.get("numberOfFloors") || 4, maxPeople = 150;
-      console.log(numFloors);
       window.addEventListener("load", function() {
           console.log("Loaded");
           const input = document.getElementById('floorCount');
-          console.log(parseFloat(numFloors));
           input.setAttribute('value', parseFloat(numFloors));
-          console.log(input);
           input.addEventListener("change", function() {
               numFloors = parseFloat(input.value);
               console.log(numFloors);
