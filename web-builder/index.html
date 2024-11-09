@@ -156,45 +156,126 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const svgData = e.target.result;
-                const loader = new THREE.SVGLoader();
-                const paths = loader.parse(svgData).paths;
-                buildBuildingFromSVGPaths(paths);
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(svgData, "image/svg+xml");
+                
+                // Parse the outer polygon for floor and outer walls with group transformation
+                let points = [];
+                svgDoc.querySelectorAll("g").forEach(group => {
+                    const transform = group.getAttribute("transform");
+                    const { translateX, translateY } = parseTransform(transform);
+
+                    const polygon = group.querySelector("polygon");
+                    if (polygon) {
+                        points = polygon.getAttribute("points").trim().split(" ").map(point => {
+                            const [x, y] = point.split(",").map(coord => parseFloat(coord));
+                            return new THREE.Vector3(x + translateX, 0, y + translateY); // z-axis is y in SVG
+                        });
+                    }
+                });
+
+                // Parse lines for inner walls with group transformations
+                const lines = [];
+                svgDoc.querySelectorAll("g").forEach(group => {
+                    const transform = group.getAttribute("transform");
+                    const { translateX, translateY } = parseTransform(transform);
+
+                    group.querySelectorAll("line").forEach(line => {
+                        const x1 = parseFloat(line.getAttribute("x1")) + translateX;
+                        const y1 = parseFloat(line.getAttribute("y1")) + translateY;
+                        const x2 = parseFloat(line.getAttribute("x2")) + translateX;
+                        const y2 = parseFloat(line.getAttribute("y2")) + translateY;
+                        lines.push({ start: new THREE.Vector3(x1, 0, y1), end: new THREE.Vector3(x2, 0, y2) });
+                    });
+                });
+
+                buildBuildingFromSVGData(points, lines);
             };
+
             reader.readAsText(file);
         }
 
-        function buildBuildingFromSVGPaths(paths) {
+        function buildBuildingFromSVGData(points, lines) {
             clearBuilding();
+            const scale = 0.5; // Adjust this scale as needed
 
-            numFloors = parseInt(document.getElementById("floorCount").value);
+            // Create the floor
+            const shape = new THREE.Shape(points.map(p => new THREE.Vector2(p.x * scale, p.z * scale)));
+            const floorGeometry = new THREE.ExtrudeGeometry(shape, { depth: 0.1 * scale, bevelEnabled: false });
+            const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = Math.PI / 2; // Lay flat
+            scene.add(floor);
+            floorObjects.push(floor);
 
-            paths.forEach((path) => {
-                path.toShapes(true).forEach((shape) => {
-                    const geometry = new THREE.ShapeGeometry(shape);
-                    const boundingBox = new THREE.Box3().setFromObject(new THREE.Mesh(geometry));
+            // Create outer walls between each pair of points
+            for (let i = 0; i < points.length; i++) {
+                const start = points[i];
+                const end = points[(i + 1) % points.length];
 
-                    // Determine if the shape is an outer floor polygon or inner walls
-                    const isOuterFloor = checkIfOuterFloor(shape); // Implement logic as needed
+                const wallHeight = roomHeight * scale;
+                const wallWidth = start.distanceTo(end) * scale;
 
-                    if (isOuterFloor) {
-                        // Floor: extrude the shape to a minimal height
-                        createBox(boundingBox.max.x - boundingBox.min.x, 0.1, boundingBox.max.y - boundingBox.min.y, 
-                            0xcccccc, { x: boundingBox.getCenter().x, y: 0, z: boundingBox.getCenter().y });
-                    } else {
-                        // Wall: extrude the shape to wall height
-                        createBox(boundingBox.max.x - boundingBox.min.x, roomHeight, wallThickness, 
-                            wallColor, { x: boundingBox.getCenter().x, y: roomHeight / 2, z: boundingBox.getCenter().y }, 
-                            true, wallOpacity);
-                    }
-                });
+                // Calculate the wall's center position
+                const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+                center.y = wallHeight / 2; // Elevate the wall to its center height
+
+                // Create wall geometry and rotate to align with the segment
+                const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
+                const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
+                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+
+                // Position and rotate the wall to connect to the start of the next wall segment
+                wall.position.set(center.x * scale, center.y, center.z * scale);
+
+                // Calculate the angle to rotate the wall to align with the next segment
+                const direction = new THREE.Vector3().subVectors(end, start).normalize();
+                const angle = Math.atan2(direction.z, direction.x); // Get angle in the XZ plane
+                wall.rotation.y = -angle; // Rotate the wall to align with the segment
+
+                scene.add(wall);
+                wallObjects.push(wall);
+            }
+
+            // Create inner walls from line elements
+            lines.forEach(({ start, end }) => {
+                const wallHeight = roomHeight * scale;
+                const wallWidth = start.distanceTo(end) * scale;
+
+                // Calculate the wall's center position
+                const center = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+                center.y = wallHeight / 2; // Elevate the wall to its center height
+
+                // Create wall geometry and rotate to align with the segment
+                const wallGeometry = new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness);
+                const wallMaterial = new THREE.MeshBasicMaterial({ color: wallColor, side: THREE.DoubleSide, opacity: wallOpacity, transparent: true });
+                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+
+                wall.position.set(center.x * scale, center.y, center.z * scale);
+                
+                // Calculate rotation to align with the line
+                const direction = new THREE.Vector3().subVectors(end, start).normalize();
+                const angle = Math.atan2(direction.z, direction.x);
+                wall.rotation.y = -angle;
+
+                scene.add(wall);
+                wallObjects.push(wall);
             });
-
-            addPeople();
         }
-        // Helper to determine if a shape is an outer floor polygon
-        function checkIfOuterFloor(shape) {
-            // Implement logic here to identify outer floor polygon based on SVG data or shape properties
-            return shape.holes.length === 0; // Example: no holes means outer floor
+
+
+        // Function to parse the "transform" attribute for translation
+        function parseTransform(transform) {
+            let translateX = 0, translateY = 0;
+            if (transform) {
+                // Match 'matrix(a b c d e f)' format
+                const matrixMatch = transform.match(/matrix\(([^,]+) ([^,]+) ([^,]+) ([^,]+) ([^,]+) ([^,]+)\)/);
+                if (matrixMatch) {
+                    translateX = parseFloat(matrixMatch[5]) || 0;
+                    translateY = parseFloat(matrixMatch[6]) || 0;
+                }
+            }
+            return { translateX, translateY };
         }
 
         // Function to create a box (floor or wall)
