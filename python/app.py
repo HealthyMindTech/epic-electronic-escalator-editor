@@ -154,7 +154,7 @@ def upload():
     file = request.files['file']
 
     # Check if the file is a PDF
-    if not file.filename.endswith('.pdf') and not file.filename.endswith('.png'):
+    if not file.filename.endswith('.pdf') and not file.filename.endswith('.png') and not file.filename.endswith('.jpg') and not file.filename.endswith('.jpeg'):
         return jsonify({"error": "Invalid file format, please upload a PDF or PNG"}), 400
 
     # Save the PDF file to a temporary location
