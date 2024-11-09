@@ -93,7 +93,7 @@ function enableDrawRect() {
 // Clear the canvas (removes all user-added elements)
 function clearCanvas() {
     canvas.getObjects().forEach(obj => {
-        if (obj !== canvas.backgroundImage) {
+        if (obj?.isWallLine) {
             canvas.remove(obj);
         }
     });
@@ -276,6 +276,7 @@ canvas.on('mouse:down', function (o) {
         stroke: 'black',
         strokeWidth: 2,
         selectable: false,
+        isWallLine: true,
     });
     canvas.add(currentLine);
     isDrawing = true; // Set drawing state to true
@@ -522,6 +523,7 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
         stroke: 'black',
         strokeWidth: 2,
         selectable: false,
+        isBuildingFootprint: true,
     });
 
     let text = [];

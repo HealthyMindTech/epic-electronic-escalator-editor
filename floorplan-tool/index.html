@@ -140,7 +140,7 @@
         </div>
 
         <div id="controls" class="controls">
-          <button onclick="enableDrawLine()">Draw Wall</button>
+          <!-- <button onclick="enableDrawLine()">Draw Wall</button> -->
           <input
             type="file"
             id="imageLoader"
@@ -148,7 +148,10 @@
             accept="image/*"
           />
           <button id="lockImageButton">Lock Image</button>
-          <button onclick="clearCanvas()">Clear</button>
+
+          <button onclick="clearCanvas()">Clear walls</button>
+          <button onclick="saveSVG()">Save as SVG</button>
+          <button onclick="openViewer()">Open Viewer</button>
           <button onclick="loadLines()">Load Lines</button>
         </div>
       </div>
