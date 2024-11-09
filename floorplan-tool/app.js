@@ -64,6 +64,7 @@ let drawingMode = null;
 let startX, startY;
 // Initialize the current mode
 let currentMode = 'Wall Drawing Mode';
+canvas.selection = false;
 
 // Create a text object to display the current mode
 const modeDisplay = new fabric.Text(currentMode, {
@@ -320,6 +321,7 @@ function toggleLockImage(forceSet = null) {
 
         // Change mode to Wall Drawing Mode
         currentMode = 'Wall Drawing Mode';
+        canvas.selection = false;
     } else if (forceSet === 'Floorplan Image Editing Mode' || (forceSet === null && currentMode === 'Wall Drawing Mode')) {
         // Unlock the image
         floorplanImage.set({
@@ -333,6 +335,7 @@ function toggleLockImage(forceSet = null) {
 
         // Change mode to Floorplan Image Editing Mode
         currentMode = 'Floorplan Image Editing Mode';
+        canvas.selection = true;
     }
 
     // Update the mode display
