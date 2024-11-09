@@ -54,6 +54,11 @@
             display: flex;
             justify-content: center;
         }
+        #export {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -68,8 +73,6 @@
         <button onclick="stopSimulation()">Stop</button>
         <button onclick="resetSimulation()">Reset</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
-        <br/>
-        <button onclick="exportToIfcJSON()">Export to IfcJSON</button>
     </div>
     <div id="timer" style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
         <p>Time to complete all trips:<br/><span id="timerValue">0</span> seconds</p>
@@ -80,6 +83,10 @@
     <div id="popup" onclick="event.stopPropagation();">
         <button onclick="removeSelectedElevator()">Remove This Elevator</button>
         <button onclick="moveSelectedElevator()">Move This Elevator</button>
+    </div>
+
+    <div id="export">
+        <button onclick="exportToIfcJSON()">Export to IfcJSON</button>
     </div>
 
     <!-- Controls for 3D Model Manipulation -->
