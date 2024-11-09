@@ -536,7 +536,7 @@
         function buildBuildingFromSVGData(points, lines) {
             clearBuilding();
 
-            maxPeople = parseInt(document.getElementById("peopleCount").value);
+            // maxPeople = parseInt(document.getElementById("peopleCount").value);
 
             // Create floors and walls for each level
             for (let f = 0; f < numFloors; f++) {
@@ -879,6 +879,7 @@
 
 
         function addPeople() {
+            const maxPeople = parseInt(document.getElementById("peopleCount").value);
             for (let i = 0; i < maxPeople; i++) {
                 const person = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff }));
                 placePersonAtRandomFloor(person);
