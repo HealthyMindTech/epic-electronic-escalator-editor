@@ -1,8 +1,7 @@
 // Initialize Fabric.js canvas
 const canvas = new fabric.Canvas('floorPlanCanvas');
 let drawingMode = null;
-let isDrawing = false;
-let currentLine, startX, startY;
+let startX, startY;
 
 
 
@@ -62,63 +61,181 @@ function drawFootprintOnCanvas(coordinates) {
     canvas.clear();
     canvas.add(footprint);
 }
+// Parameters
+const snapThreshold = 30; // Pixels within which snapping will occur
+let snappingPoint = null; // Point where snapping happens
+let isDrawing = false; // Track drawing state
+let currentLine = null; // Current line being drawn
 
+function findClosestPointOnCanvas(x, y) {
+    const snapThreshold = 10; // Pixels within which snapping will occur
+    let closestPoint = null;
+    let minDistance = snapThreshold;
 
-// Handle mouse events for drawing
-canvas.on('mouse:down', function(o) {
-    if (!drawingMode) return;
+    // Check for snapping on the floorplan polygon
+    const polygons = canvas.getObjects('polygon');
+    if (polygons.length > 0) {
+        const polygon = polygons[0];
+        const polygonPoints = polygon.points;
+        const offsetX = polygon.left;
+        const offsetY = polygon.top;
+        const scaleX = polygon.scaleX || 1;
+        const scaleY = polygon.scaleY || 1;
 
-    const pointer = canvas.getPointer(o.e);
-    startX = pointer.x;
-    startY = pointer.y;
+        for (let i = 0; i < polygonPoints.length; i++) {
+            const start = {
+                x: polygonPoints[i].x * scaleX + offsetX,
+                y: polygonPoints[i].y * scaleY + offsetY
+            };
+            const end = {
+                x: polygonPoints[(i + 1) % polygonPoints.length].x * scaleX + offsetX,
+                y: polygonPoints[(i + 1) % polygonPoints.length].y * scaleY + offsetY
+            };
 
-    if (drawingMode === 'line') {
-        // Start drawing a line
-        currentLine = new fabric.Line([startX, startY, startX, startY], {
-            stroke: 'black',
-            strokeWidth: 2,
-            selectable: false,
-        });
-        canvas.add(currentLine);
-    } else if (drawingMode === 'rect') {
-        // Start drawing a rectangle
-        currentLine = new fabric.Rect({
-            left: startX,
-            top: startY,
-            width: 0,
-            height: 0,
-            fill: 'rgba(0, 0, 255, 0.3)',
-            stroke: 'blue',
-            strokeWidth: 2,
-            selectable: false,
-        });
-        canvas.add(currentLine);
+            const closest = getClosestPointOnLine(start, end, { x, y });
+            const distance = getDistance(closest, { x, y });
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPoint = closest;
+            }
+        }
     }
-    isDrawing = true;
-});
 
-canvas.on('mouse:move', function(o) {
-    if (!isDrawing) return;
+    // Check for snapping on user-drawn lines, excluding the line in progress
+    const lines = canvas.getObjects('line');
+    for (const line of lines) {
+        if (line === currentLine) continue; // Skip the current line in progress
 
+        const start = { x: line.x1, y: line.y1 };
+        const end = { x: line.x2, y: line.y2 };
+
+        const closest = getClosestPointOnLine(start, end, { x, y });
+        const distance = getDistance(closest, { x, y });
+
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = closest;
+        }
+    }
+
+    return closestPoint;
+}
+
+// Update mouse:move event to use the new snapping function
+canvas.on('mouse:move', function (o) {
     const pointer = canvas.getPointer(o.e);
-    if (drawingMode === 'line') {
-        // Update line endpoint as the mouse moves
-        currentLine.set({ x2: pointer.x, y2: pointer.y });
-    } else if (drawingMode === 'rect') {
-        // Update rectangle dimensions as the mouse moves
+    const { x, y } = pointer;
+    
+    // Find the closest point on any line or polygon, excluding the current line
+    snappingPoint = findClosestPointOnCanvas(x, y);
+
+    // Provide visual feedback for snapping
+    if (snappingPoint) {
+        showSnapIndicator(snappingPoint.x, snappingPoint.y);
+    } else {
+        hideSnapIndicator();
+    }
+
+    // Update the endpoint of the line in progress
+    if (isDrawing && currentLine) {
         currentLine.set({
-            width: Math.abs(pointer.x - startX),
-            height: Math.abs(pointer.y - startY),
-            left: pointer.x > startX ? startX : pointer.x,
-            top: pointer.y > startY ? startY : pointer.y,
+            x2: snappingPoint ? snappingPoint.x : x,
+            y2: snappingPoint ? snappingPoint.y : y,
         });
+        canvas.renderAll();
     }
-    canvas.renderAll();
 });
 
-canvas.on('mouse:up', function() {
-    isDrawing = false;
+
+// Start drawing on mouse down
+canvas.on('mouse:down', function (o) {
+    if (isDrawing) return; // Avoid starting a new line if already drawing
+
+    const pointer = canvas.getPointer(o.e);
+    const { x, y } = snappingPoint || pointer;
+
+    // Start a new line from the snapping point or cursor position
+    currentLine = new fabric.Line([x, y, x, y], {
+        stroke: 'black',
+        strokeWidth: 2,
+        selectable: false,
+    });
+    canvas.add(currentLine);
+    isDrawing = true; // Set drawing state to true
 });
+
+// Finish drawing on mouse up
+canvas.on('mouse:up', function (o) {
+    if (!isDrawing || !currentLine) return;
+
+    const pointer = canvas.getPointer(o.e);
+    const { x, y } = snappingPoint || pointer;
+
+    // Set the endpoint of the current line, snapping if a point is near
+    currentLine.set({
+        x2: x,
+        y2: y,
+    });
+    canvas.renderAll();
+    
+    isDrawing = false; // Reset drawing state
+    currentLine = null; // Reset current line
+    hideSnapIndicator(); // Hide snapping indicator
+});
+// 
+
+
+
+// Helper to calculate the closest point on a line segment to a given point
+function getClosestPointOnLine(start, end, point) {
+    const lineLengthSquared = getDistanceSquared(start, end);
+    if (lineLengthSquared === 0) return start; // Start and end are the same
+
+    // Project point onto the line, clamping to the segment
+    let t = ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) / lineLengthSquared;
+    t = Math.max(0, Math.min(1, t));
+    return { x: start.x + t * (end.x - start.x), y: start.y + t * (end.y - start.y) };
+}
+
+// Calculate Euclidean distance
+function getDistance(p1, p2) {
+    return Math.sqrt(getDistanceSquared(p1, p2));
+}
+
+// Calculate squared distance (faster for comparisons)
+function getDistanceSquared(p1, p2) {
+    return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
+}
+
+// Visual feedback for snapping
+function showSnapIndicator(x, y) {
+    const radius = 5; // Radius of the snap indicator
+
+    if (!canvas.snapIndicator) {
+        canvas.snapIndicator = new fabric.Circle({
+            radius: radius,
+            fill: 'red',
+            selectable: false,
+            evented: false,
+        });
+        canvas.add(canvas.snapIndicator);
+    }
+    
+    // Position the center of the circle at (x, y)
+    canvas.snapIndicator.set({ left: x - radius, top: y - radius });
+    canvas.snapIndicator.setCoords();
+    canvas.renderAll();
+}
+
+
+// Hide snap indicator when not needed
+function hideSnapIndicator() {
+    if (canvas.snapIndicator) {
+        canvas.remove(canvas.snapIndicator);
+        canvas.snapIndicator = null;
+    }
+}
 
 
 function fetchBuildingFootprint(lat, lng) {
