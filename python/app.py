@@ -7,6 +7,7 @@ import cv2
 from pdf2image import convert_from_path
 from sklearn.cluster import DBSCAN
 from flask_cors import CORS
+from PIL import Image
 
 app = Flask(__name__)
 CORS(app)
@@ -76,12 +77,17 @@ def filter_similar_lines(lines, delta_theta=0.05, delta_rho=5.0, min_parallel_li
 
 
 def do_the_magic(file_path):
-    pages = convert_from_path(file_path)
+    if file_path.endswith('.pdf'):
+        pages = convert_from_path(file_path)
 
-    page = pages[0]
+        page = pages[0]
+        image = np.array(page)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        # im_image = Image.open(file_path)
+        # image = np.array(im_image.getdata())
 
-    image = np.array(page)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     img = cv2.GaussianBlur(gray, (11, 11), 0)
     # Apply edge detection
@@ -148,8 +154,8 @@ def upload():
     file = request.files['file']
 
     # Check if the file is a PDF
-    if file.filename == '' or not file.filename.endswith('.pdf'):
-        return jsonify({"error": "Invalid file format, please upload a PDF"}), 400
+    if not file.filename.endswith('.pdf') and not file.filename.endswith('.png'):
+        return jsonify({"error": "Invalid file format, please upload a PDF or PNG"}), 400
 
     # Save the PDF file to a temporary location
     temp_dir = tempfile.gettempdir()
