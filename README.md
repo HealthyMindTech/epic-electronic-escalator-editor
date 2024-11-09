@@ -34,7 +34,7 @@ pip install -r requirements-mini.txt
 flask run
 ```
 
-And the webservice will be available in http://localhost:5000
+And the webservice will be available at http://localhost:5000
 
 The webservice can handle pdf, png and jpg files of floorplans.
 
