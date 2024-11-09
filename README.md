@@ -1,36 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Epic electronic escalator editor
 
-## Getting Started
+This is the famous epic electronic escalator editor. It help sellers quickly set up a good rapport with their customers. 
 
-First, run the development server:
+Using openstreetmap and optionally existing floorplans, it can make quick simulation of buildings and their potential new elevators
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+It can all be viewed on https://healthymindtech.com/epic-electronic-escalator-editor/floorplan-tool/
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# Technology
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Almost all of the code is javascript in the floorplan-tool folder. The javascript contains code both for drawing a nice visual map and using openstreetmaps API to get building info, from across the world.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+There is furthermore a 3d simulation of buildings available, fed with info from openstreetmap.
 
-## Learn More
+In addition this repo contains a simply python AI web service that attempts to parse images of floor plans to map onto the building footprints retrieved from openstreetmap. This webservice is not always completely successful, but often works for simple demonstration purposes.
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
