@@ -59,17 +59,14 @@
 <body>
     <!-- User Interface -->
     <div id="interface">
-    <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)">
+    <!-- <input type="file" id="svgUpload" accept=".svg" onchange="loadSVG(event)"> -->
     <form onsubmit="return false;">
         <label>Number of Floors: <input type="number" id="floorCount" value="4" min="1"></label><br>
-        <label>Number of Elevators: <input type="number" id="elevatorCount" value="2" min="1"></label><br>
-        <label>Number of People: <input type="number" id="peopleCount" value="5" min="1"></label><br>
+        <label>Number of People: <input type="number" id="peopleCount" value="50" min="1"></label><br>
     </form>
         <button onclick="startSimulation()">Play Animation</button>
         <button onclick="stopSimulation()">Stop Animation</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
-        <button onclick="enableElevatorAdding()">Add Elevator</button>
-        <button onclick="enableSpawnPointSetting()">Set People Spawn Point</button>
     </div>
 
     <!-- Popup for elevator actions -->
@@ -125,12 +122,12 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/SVGLoader.js"></script>
     <script>
-        let numFloors = 4, maxElevators = 2, maxPeople = 150;
+        let numFloors = 4, maxPeople = 150;
         let elevators = [], people = [], movingPeople = [], selectedElevator = null;
         let floorObjects = [], wallObjects = [], isSimulationRunning = false;
         let isMovingElevator = false;
 
-        let isAddingElevator = false;
+        let isAddingElevator = true;
         let isSettingSpawnPoint = false;
         let peopleSpawnPoint = null;
 
@@ -195,9 +192,11 @@
         const roomHeight = 2.9;     // Height of walls
         const wallThickness = 0.1;
         const wallOpacity = 0.1;
-        const floorOpacity = 0.1;
+        const floorOpacity = 0.01;
+        const elevatorOpacity = 1.0;
         const wallColor = 0x1ed273;
         const floorColor = 0x1ed273;
+        const elevatorColor = 0x0000ff;
         const elevatorWidth = 1;
         const elevatorDepth = 1;
         const scale = 0.1; // Adjust this scale as needed
@@ -423,7 +422,6 @@
             clearBuilding();
 
             numFloors = parseInt(document.getElementById("floorCount").value);
-            maxElevators = parseInt(document.getElementById("elevatorCount").value);
             maxPeople = parseInt(document.getElementById("peopleCount").value);
 
             // Create floors and walls for each level
@@ -636,13 +634,10 @@
 
         // Function to add an elevator if within limits
         function addElevator(position) {
-            if (elevators.length >= maxElevators) {
-                console.log("Maximum number of elevators reached.");
-                return;
-            }
+
             const elevatorHeight = numFloors * floorHeight; // Ensure elevator matches building height
             const geometry = new THREE.BoxGeometry(elevatorWidth, elevatorHeight, elevatorDepth);
-            const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
+            const material = new THREE.MeshBasicMaterial({ color: elevatorColor, transparent: true, opacity: elevatorOpacity });
             const elevatorBox = new THREE.Mesh(geometry, material);
 
             // Position the elevator at the clicked location
@@ -730,20 +725,7 @@
                     addElevator(clickedPosition);
                     console.log("Elevator added at:", clickedPosition);
                 }
-                isAddingElevator = false; // Turn off the mode after adding elevator
-                return;
-            }
-
-            // Handle setting spawn point
-            if (isSettingSpawnPoint) {
-                const floorIntersects = raycaster.intersectObjects(floorObjects);
-                if (floorIntersects.length > 0) {
-                    const intersect = floorIntersects[0];
-                    peopleSpawnPoint = intersect.point;
-                    alert("People spawn point set.");
-                    console.log("People spawn point set at:", peopleSpawnPoint);
-                }
-                isSettingSpawnPoint = false;
+                // isAddingElevator = false; // Turn off the mode after adding elevator
                 return;
             }
 
