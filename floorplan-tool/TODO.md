@@ -5,7 +5,9 @@
 [ ] Export video of the animation
 [ ] Show mouse controls on page (or on pressing a specific button etc)
 [x] Change number of floors should update the building model instantly
- 
+[ ] Add instructions from first page: select a building
+[ ] Make it work nice on mobile
+
 Stretch goals
 [ ] Change number of people should be reflected on play animation
 [ ] Reverse animation (going back out of the building)

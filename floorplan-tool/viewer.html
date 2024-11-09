@@ -68,6 +68,8 @@
         <button onclick="stopSimulation()">Stop</button>
         <button onclick="resetSimulation()">Reset</button>
         <button onclick="removeAllElevators()">Remove All Elevators</button>
+        <br/>
+        <button onclick="exportToIfcJSON()">Export to IfcJSON</button>
     </div>
     <div id="timer" style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px;">
         <p>Time to complete all trips:<br/><span id="timerValue">0</span> seconds</p>
@@ -1067,6 +1069,73 @@
 
         // Call this function for the desired floor
         // visualizeGrid(0); // Visualize grid for floor 0
+
+        function exportToIfcJSON() {
+            const ifcJSON = {
+                type: "ifcJSON",
+                version: "0.0.1",
+                buildings: []
+            };
+
+            const building = {
+                type: "IfcBuilding",
+                floors: []
+            };
+
+            floorObjects.forEach((floor, index) => {
+                const floorData = {
+                    type: "IfcBuildingStorey",
+                    name: `Floor ${index + 1}`,
+                    elements: []
+                };
+
+                wallObjects.forEach(wall => {
+                    if (Math.abs(wall.position.y - floor.position.y) <= floorHeight / 2) {
+                        const wallData = {
+                            type: "IfcWall",
+                            position: {
+                                x: wall.position.x,
+                                y: wall.position.y,
+                                z: wall.position.z
+                            },
+                            dimensions: {
+                                width: wall.geometry.parameters.width,
+                                height: wall.geometry.parameters.height,
+                                depth: wall.geometry.parameters.depth
+                            }
+                        };
+                        floorData.elements.push(wallData);
+                    }
+                });
+
+                elevators.forEach(elevator => {
+                        const elevatorData = {
+                            type: "IfcElevator",
+                            position: {
+                                x: elevator.position.x,
+                                z: elevator.position.z
+                            },
+                            dimensions: {
+                                width: elevator.geometry.parameters.width,
+                                depth: elevator.geometry.parameters.depth
+                            }
+                        }
+                        floorData.elements.push(elevatorData);
+                });
+
+                building.floors.push(floorData);
+            });
+
+            ifcJSON.buildings.push(building);
+
+            const blob = new Blob([JSON.stringify(ifcJSON, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "building.ifcjson";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
 
         function getRandomDestinationWithinFloor(floor) {
