@@ -137,7 +137,8 @@
           input.setAttribute('value', parseFloat(numFloors));
           input.addEventListener("change", function() {
               numFloors = parseFloat(input.value);
-              console.log(numFloors);
+              getSVGDataFromURL();
+              readdElevators();
           });
           getSVGDataFromURL();
       });
@@ -172,6 +173,7 @@
             // Provide visual feedback
             alert("Click on the floor to set the people spawn point.");
         }
+
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -372,6 +374,7 @@
             // Create the ground mesh
             const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
 
+
             // Rotate the plane to lie flat (horizontal)
             groundMesh.rotation.x = -Math.PI / 2;
 
@@ -457,12 +460,13 @@
             const size = boundingBox.getSize(new THREE.Vector3()).multiplyScalar(scale);
             const maxDim = Math.max(size.x, size.y, size.z);
 
+
             // Calculate an appropriate distance for the camera
             const fov = camera.fov * (Math.PI / 180);
             let cameraDistance = maxDim / (2 * Math.tan(fov / 2));
 
             // Set the camera position based on the size of the building
-            camera.position.set(center.x, center.y + cameraDistance, center.z + cameraDistance);
+            camera.position.set(center.x + 3, center.y + cameraDistance, center.z + cameraDistance);
 
             // Update controls to focus on the building's center
             controls.target.copy(center);
@@ -553,6 +557,7 @@
         function parseTransform(transform) {
             let translateX = 0, translateY = 0;
             if (transform) {
+
                 // Match 'matrix(a b c d e f)' format
                 const matrixMatch = transform.match(/matrix\(([^,]+) ([^,]+) ([^,]+) ([^,]+) ([^,]+) ([^,]+)\)/);
                 if (matrixMatch) {
@@ -624,6 +629,7 @@
                 // Outer walls
                 for (let i = 0; i < points.length; i++) {
                     const start = points[i];
+
                     const end = points[(i + 1) % points.length];
                     allWalls.push({
                         start: new THREE.Vector2(start.x * scale, start.z * scale),
@@ -689,13 +695,31 @@
             const geometry = new THREE.BoxGeometry(elevatorWidth, elevatorHeight, elevatorDepth);
             const material = new THREE.MeshBasicMaterial({ color: elevatorColor, transparent: true, opacity: elevatorOpacity });
             const elevatorBox = new THREE.Mesh(geometry, material);
+
             elevatorBox.renderOrder = -1
             // Position the elevator at the clicked location
             elevatorBox.position.set(position.x, elevatorHeight / 2, position.z);
             scene.add(elevatorBox);
 
-            // Track the elevator
             elevators.push(elevatorBox);
+        }
+
+        function removeElevator(elevator) {
+            scene.remove(elevator);
+            elevator.geometry.dispose();
+            elevator.material.dispose();
+        }
+
+        function readdElevators() {
+            const positions = [];
+            for (let elevator of elevators) {
+                const position = elevator.position;
+                removeElevator(elevator);
+                positions.push(position);
+            }
+            for (let position of positions) {
+                addElevator(position);
+            }
         }
 
         // Function to remove all elevators
