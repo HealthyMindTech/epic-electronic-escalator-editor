@@ -3,10 +3,25 @@ const canvas = new fabric.Canvas('floorPlanCanvas');
 let numberOfFloors = null;
 let drawingMode = null;
 let startX, startY;
+// Initialize the current mode
+let currentMode = 'Wall Drawing Mode';
+
+// Create a text object to display the current mode
+const modeDisplay = new fabric.Text(currentMode, {
+    left: canvas.getWidth() - 200, // Adjust position as needed
+    top: 10,
+    fontSize: 18,
+    fontFamily: 'Arial',
+    fill: 'black',
+    selectable: false,
+    evented: false,
+});
+
+// Add the mode display to the canvas
+canvas.add(modeDisplay);
 
 
-
-// Functions to enable drawing modes
+// Functions to enable Wall Drawing Modes
 function enableDrawLine() {
     drawingMode = 'line';
 }
@@ -33,6 +48,60 @@ function saveSVG() {
     link.download = 'floor_plan_with_features.svg';
     link.click();
 }
+
+// Reference to the input element
+const imageLoader = document.getElementById('imageLoader');
+let floorplanImage = null;
+
+// Add event listener to handle image loading
+imageLoader.addEventListener('change', handleImage, false);
+
+function handleImage(e) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        const imgObj = new Image();
+        imgObj.src = event.target.result;
+        imgObj.onload = function () {
+            const image = new fabric.Image(imgObj);
+            image.set({
+                left: canvas.getWidth() / 2,
+                top: canvas.getHeight() / 2,
+                originX: 'center',
+                originY: 'center',
+                selectable: true,
+                hasRotatingPoint: true,
+                excludeFromExport: true, // Exclude image from SVG export
+            });
+            // Optionally, customize control visibility
+            image.setControlsVisibility({
+                mt: true, // Middle top
+                mb: true, // Middle bottom
+                ml: true, // Middle left
+                mr: true, // Middle right
+                bl: true, // Bottom left
+                br: true, // Bottom right
+                tl: true, // Top left
+                tr: true, // Top right
+                mtr: true,  // Rotation control
+            });
+            canvas.add(image);
+            canvas.setActiveObject(image);
+            floorplanImage = image;
+            toggleLockImage('Floorplan Image Editing Mode');
+            canvas.renderAll();
+            
+            // Keep a reference to the floorplan image
+
+            // Send the image to the back
+            canvas.sendToBack(floorplanImage);
+        };
+    };
+    reader.readAsDataURL(e.target.files[0]);
+}
+// Add event listener to the lock/unlock button
+const lockImageButton = document.getElementById('lockImageButton');
+lockImageButton.addEventListener('click', () => toggleLockImage());
+
 
 // Open a new tab with the Viewer using the SVG data from the canvas
 function openViewer() {
@@ -74,6 +143,7 @@ function drawFootprintOnCanvas(coordinates) {
     // Clear any previous drawings and add the footprint
     canvas.clear();
     canvas.add(footprint);
+    canvas.add(modeDisplay);
 }
 // Parameters
 const snapThreshold = 30; // Pixels within which snapping will occur
@@ -135,9 +205,10 @@ function findClosestPointOnCanvas(x, y) {
 
     return closestPoint;
 }
-
 // Update mouse:move event to use the new snapping function
 canvas.on('mouse:move', function (o) {
+    if (currentMode !== 'Wall Drawing Mode') return; // Disable drawing if not in Wall Drawing Mode
+
     const pointer = canvas.getPointer(o.e);
     const { x, y } = pointer;
 
@@ -161,9 +232,9 @@ canvas.on('mouse:move', function (o) {
     }
 });
 
-
 // Start drawing on mouse down
 canvas.on('mouse:down', function (o) {
+    if (currentMode !== 'Wall Drawing Mode') return; // Disable drawing if not in Wall Drawing Mode
     if (isDrawing) return; // Avoid starting a new line if already drawing
 
     const pointer = canvas.getPointer(o.e);
@@ -178,9 +249,9 @@ canvas.on('mouse:down', function (o) {
     canvas.add(currentLine);
     isDrawing = true; // Set drawing state to true
 });
-
 // Finish drawing on mouse up
 canvas.on('mouse:up', function (o) {
+    if (currentMode !== 'Wall Drawing Mode') return; // Disable drawing if not in Wall Drawing Mode
     if (!isDrawing || !currentLine) return;
 
     const pointer = canvas.getPointer(o.e);
@@ -198,6 +269,46 @@ canvas.on('mouse:up', function (o) {
     hideSnapIndicator(); // Hide snapping indicator
 });
 //
+// Function to lock/unlock the floorplan image
+function toggleLockImage(forceSet = null) {
+    if (!floorplanImage) {
+        alert("No image loaded.");
+        currentMode = 'Wall Drawing Mode';
+        return;
+    }
+
+    if (forceSet === 'Wall Drawing Mode' || (forceSet === null && currentMode === 'Floorplan Image Editing Mode')) {
+        // Lock the image
+        floorplanImage.set({
+            selectable: false,
+            evented: false,
+        });
+        // Send it to back
+        canvas.sendToBack(floorplanImage);
+        // Update button text
+        lockImageButton.textContent = 'Unlock Image';
+
+        // Change mode to Wall Drawing Mode
+        currentMode = 'Wall Drawing Mode';
+    } else if (forceSet === 'Floorplan Image Editing Mode' || (forceSet === null && currentMode === 'Wall Drawing Mode')) {
+        // Unlock the image
+        floorplanImage.set({
+            selectable: true,
+            evented: true,
+        });
+        // Bring image to front (optional)
+        // canvas.bringToFront(floorplanImage);
+        // Update button text
+        lockImageButton.textContent = 'Lock Image';
+
+        // Change mode to Floorplan Image Editing Mode
+        currentMode = 'Floorplan Image Editing Mode';
+    }
+
+    // Update the mode display
+    modeDisplay.text = currentMode;
+    canvas.renderAll();
+}
 
 
 
@@ -251,20 +362,6 @@ function hideSnapIndicator() {
     }
 }
 
-
-// [out:json];
-// (
-//   // Query buildings with height information
-//   way["building"]["height"];
-//   relation["building"]["height"];
-
-//   // Query buildings with number of levels (approximate height)
-//   way["building"]["building:levels"];
-//   relation["building"]["building:levels"];
-// );
-// out body;
-// >;
-// out skel qt;
 
 function fetchBuildingFootprint(lat, lng) {
     const query = `
@@ -436,5 +533,8 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
     if (infoText) {
         canvas.add(infoText);
     }
+    
+    // Add the mode display to the canvas
+    canvas.add(modeDisplay);
 
 }
