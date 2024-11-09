@@ -92,6 +92,32 @@
         </div>
     </div>
 
+    <script>
+        // Add keyboard controls
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case 'w':
+                    panCamera('up');
+                    break;
+                case 's':
+                    panCamera('down');
+                    break;
+                case 'a':
+                    panCamera('left');
+                    break;
+                case 'd':
+                    panCamera('right');
+                    break;
+                case 'q':
+                    rotateCamera('left');
+                    break;
+                case 'e':
+                    rotateCamera('right');
+                    break;
+            }
+        });
+        </script>
+
     <!-- Include Three.js and OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
