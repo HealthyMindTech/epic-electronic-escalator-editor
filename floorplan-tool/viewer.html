@@ -134,6 +134,7 @@
       window.addEventListener("load", function() {
           console.log("Loaded");
           const input = document.getElementById('floorCount');
+          input.value = numFloors;
           input.setAttribute('value', parseFloat(numFloors));
           input.addEventListener("change", function() {
               numFloors = parseFloat(input.value);
