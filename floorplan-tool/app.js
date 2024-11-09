@@ -120,6 +120,14 @@ function handleImage(e) {
     const reader = new FileReader();
     reader.onload = function (event) {
         const imgObj = new Image();
+        const data = new FormData();
+        data.append('file', e.target.files[0]);
+
+        fetch("https://python-wandering-dream-160.fly.dev/upload", {
+            method: 'POST',
+            body: data
+        }).then(response => console.log(response.json()));
+
         imgObj.src = event.target.result;
         imgObj.onload = function () {
             lockImageButton.className = "btn btn-primary text-gray-200";
@@ -164,7 +172,7 @@ function handleImage(e) {
             floorplanImage = image;
             toggleLockImage('Floorplan Image Editing Mode');
             canvas.renderAll();
-            
+
             // Keep a reference to the floorplan image
 
             // Send the image to the back
@@ -583,7 +591,7 @@ function drawFootprintOnCanvas(buildingInfo, coordinates) {
     if (infoText) {
         canvas.add(infoText);
     }
-    
+
     // Add the mode display to the canvas
     canvas.add(modeDisplay);
 
