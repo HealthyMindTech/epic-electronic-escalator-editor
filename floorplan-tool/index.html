@@ -56,9 +56,9 @@
     <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
     <script src="app.js"></script>
     <script>
-        // Initialize the map
-        const map = L.map('map').setView([60.162946, 24.904614], 16);
-
+        // Initialize the map at Junction location
+        const map = L.map('map').setView([60.1618271,24.9037326], 16);
+        fetchBuildingFootprint(60.1618271,24.9037326);
         // Add base layer
         L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '© Data <a href="https://openstreetmap.org">OpenStreetMap</a>',
@@ -70,7 +70,7 @@
         const osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
 
         // Locate and center on user's location
-        map.locate({ setView: true, maxZoom: 18 });
+        // map.locate({ setView: true, maxZoom: 18 });
 
         // Add event listener to handle location found
         map.on('locationfound', (e) => {
