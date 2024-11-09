@@ -123,6 +123,17 @@ function handleImage(e) {
         imgObj.src = event.target.result;
         imgObj.onload = function () {
             const image = new fabric.Image(imgObj);
+
+             // Calculate the scaling factors
+            const canvasWidth = canvas.getWidth();
+            const canvasHeight = canvas.getHeight();
+            const imageWidth = image.width;
+            const imageHeight = image.height;
+
+            const scaleX = canvasWidth / imageWidth;
+            const scaleY = canvasHeight / imageHeight;
+            const scale = Math.min(scaleX, scaleY);
+
             image.set({
                 left: canvas.getWidth() / 2,
                 top: canvas.getHeight() / 2,
@@ -132,6 +143,8 @@ function handleImage(e) {
                 hasRotatingPoint: true,
                 excludeFromExport: true, // Exclude image from SVG export
                 opacity: 0.5,
+                scaleX: scale,
+                scaleY: scale
             });
             // Optionally, customize control visibility
             image.setControlsVisibility({
