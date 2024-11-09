@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive Building Map</title>
+    <title>E3: Builder</title>
 
     <!-- Leaflet and OSM Buildings CSS -->
     <link
@@ -52,7 +52,6 @@
         display: flex;
         justify-content: center;
         width: 100%; /* Use full width of tool container */
-        margin-top: 20px;
       }
 
       /* Responsive canvas element */
@@ -77,14 +76,14 @@
       }
 
       /* Controls styles */
-      #controls {
+      .controls {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         margin-top: 20px;
       }
-      #controls button,
-      #controls input[type="file"] {
+      .controls button,
+      .controls input[type="file"] {
         margin: 5px;
       }
 
@@ -107,10 +106,24 @@
         width: 100%; /* Use 100% width, height will be set dynamically */
         height: auto; /* Height will be controlled by JavaScript */
       }
+
+      /* Style for the Open Viewer button */
+      .open-viewer-btn {
+        background-color: green;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        }
+
+      .open-viewer-btn:hover {
+        background-color: darkgreen;
+      }
     </style>
   </head>
   <body>
-    <h1>Find and Draw Building Floorplans</h1>
+    <h1>E3 Builder</h1>
+    <h2>Click on a building on the map</h2>
 
     <!-- Main container that holds both the map and the tool -->
     <div id="mainContainer">
@@ -118,11 +131,15 @@
       <div id="map" style="cursor: pointer"></div>
       <!-- Tool Section -->
       <div id="toolContainer">
+        <div class="controls" style="position: absolute; top: 60px; right: 20px;">
+            <button onclick="saveSVG()">Save as SVG</button>
+            <button class="open-viewer-btn" onclick="openViewer()">Open Viewer</button>
+        </div>  
         <div id="canvasContainer">
           <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
         </div>
 
-        <div id="controls">
+        <div id="controls" class="controls">
           <button onclick="enableDrawLine()">Draw Wall</button>
           <input
             type="file"
@@ -132,8 +149,6 @@
           />
           <button id="lockImageButton">Lock Image</button>
           <button onclick="clearCanvas()">Clear</button>
-          <button onclick="saveSVG()">Save as SVG</button>
-          <button onclick="openViewer()">Open Viewer</button>
           <button onclick="loadLines()">Load Lines</button>
         </div>
       </div>
