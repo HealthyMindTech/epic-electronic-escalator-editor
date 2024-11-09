@@ -335,7 +335,22 @@
             }
         }
 
+        function getSVGDataFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const svgData = urlParams.get('svg');
+            if (svgData) {
+                loadSVGFromFile(decodeURIComponent(svgData));
+            }
+        }
 
+        function loadSVG(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                loadSVGFromFile(e.target.result);
+            };
+            reader.readAsText(file);
+        }
 
         // Load SVG From File
         function loadSVGFromFile(file) {
@@ -938,6 +953,8 @@
 
         function stopSimulation() { isSimulationRunning = false; }
 
+        getSVGDataFromURL();
+        
         // Event listener for mouse clicks
         window.addEventListener('click', onMouseClick, false);
 
