@@ -348,6 +348,31 @@
             }
         }
 
+        function addGround() {
+            // Create a large ground plane geometry
+            const groundSize = 400; // Size of the ground plane
+            const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
+
+            // Create a gray material
+            const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x041f11 }); // Gray color
+
+            // Create the ground mesh
+            const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+
+            // Rotate the plane to lie flat (horizontal)
+            groundMesh.rotation.x = -Math.PI / 2;
+
+            // Position the plane under the building
+            groundMesh.position.y = 0; // Adjust if necessary
+
+            // Optional: Enable shadows
+            groundMesh.receiveShadow = true;
+
+            // Add the ground plane to the scene
+            scene.add(groundMesh);
+
+        }
+
         function getSVGDataFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const svgData = urlParams.get('svg');
@@ -1049,6 +1074,7 @@
             controls.update();
             renderer.render(scene, camera);
         }
+        addGround()
         animate();
 
         // Handle window resizing
