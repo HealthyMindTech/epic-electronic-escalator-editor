@@ -20,7 +20,7 @@ Running this code is very easy, a simple way is to:
 
 ```
 cd floormap-tool
-python -mhttp.server
+python -m http.server
 ```
 And then point your browser at http://localhost:8080
 
